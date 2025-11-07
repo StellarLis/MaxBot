@@ -1,39 +1,40 @@
 package main
 
 import (
-	"context"
-	"fmt"
 	"log/slog"
+	"maxbot/internal/handlers"
+	"maxbot/internal/repository"
+	"maxbot/internal/services"
+	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
+	"time"
 
-	maxbot "github.com/max-messenger/max-bot-api-client-go"
-	"github.com/max-messenger/max-bot-api-client-go/schemes"
+	_ "github.com/lib/pq"
 )
 
 func main() {
-    api, err := maxbot.New(os.Getenv("TOKEN"))
-	if err != nil {
-		slog.Error(err.Error())
+	repositoryObj := repository.New()
+	serviceObj := &services.Service{Repository: repositoryObj}
+	handler := &handlers.HttpHandler{Service: serviceObj}
+
+	// Run Http Server
+	server := &http.Server{
+		Addr:         ":8080",
+		Handler:      handler.New(),
+		ReadTimeout:  4 * time.Second,
+		WriteTimeout: 4 * time.Second,
+		IdleTimeout:  30 * time.Second,
 	}
-	ctx, cancel := context.WithCancel(context.Background())
-    info, err := api.Bots.GetBot(ctx)
-    fmt.Printf("Get me: %#v %#v", info, err)
+	go server.ListenAndServe()
 
-    go func() {
-        exit := make(chan os.Signal)
-        signal.Notify(exit, os.Kill, os.Interrupt)
-        <-exit
-        cancel()
-    }()
+	// Graceful Shutdown
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
+	stoppingSignal := <-stop
+	slog.With("signal", stoppingSignal).Info("stopping application")
 
-    for upd := range api.GetUpdates(ctx) {
-        switch upd := upd.(type) {
-        case *schemes.MessageCreatedUpdate:
-            _, err := api.Messages.Send(ctx, maxbot.NewMessage().SetChat(upd.Message.Recipient.ChatId).SetText("Привет! ✨"))
-			if err != nil {
-				slog.Error(err.Error())
-			}
-        }
-    }
+    repositoryObj.Stop()
+	slog.Info("application stopped")
 }
