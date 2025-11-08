@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"maxbot/internal/dto"
 	middleware "maxbot/internal/middlewares"
 	"maxbot/internal/models"
 	"maxbot/internal/services"
@@ -16,6 +17,8 @@ type HandlerInterface interface {
 	GetDuelLogs(c *gin.Context)
 	ContributeToDuel(c *gin.Context)
 	CreateNewDuel(c *gin.Context)
+	CreateNewHabit(c *gin.Context)
+	GetUserHabits(c *gin.Context)
 }
 
 type HttpHandler struct {
@@ -33,6 +36,8 @@ func (h *HttpHandler) New() http.Handler {
 	router.GET("/duel/getDuelLogs", h.GetDuelLogs)
 	router.POST("/duel/contribute", h.ContributeToDuel)
 	router.POST("/duel/createNew", h.CreateNewDuel)
+	router.POST("/habit/createNew", middleware.UserExistsOrNot(*h.Service.Repository), h.CreateNewHabit)
+	router.GET("/habit/getUserHabits", middleware.UserExistsOrNot(*h.Service.Repository), h.GetUserHabits)
 
 	return router.Handler()
 }
@@ -70,4 +75,43 @@ func (h *HttpHandler) ContributeToDuel(c *gin.Context) {
 
 func (h *HttpHandler) CreateNewDuel(c *gin.Context) {
 	// TODO
+}
+
+func (h *HttpHandler) CreateNewHabit(c *gin.Context) {
+	userId := c.MustGet("currentUser").(*models.UserDb).ID
+	var createNewHabitDto dto.CreateNewHabitDto
+	if err := c.BindJSON(&createNewHabitDto); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error": "failed to parse data",
+			"details": err.Error(),
+		})
+		return
+	}
+	err := h.Service.CreateHabit(
+		userId,
+		createNewHabitDto.HabitName,
+		createNewHabitDto.HabitCategory,
+	)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error": "error while creating new habit",
+			"details": err.Error(),
+		})
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"message": "successfully created new habit",
+	})
+}
+
+func (h *HttpHandler) GetUserHabits(c *gin.Context) {
+	userId := c.MustGet("currentUser").(*models.UserDb).ID
+	habits, err := h.Service.GetUserHabits(userId)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error": "error while getting user habits",
+			"details": err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, habits)
 }
