@@ -55,7 +55,9 @@ CREATE TABLE IF NOT EXISTS duels(
 CREATE TABLE IF NOT EXISTS logs(
 	id SERIAL PRIMARY KEY,
 	owner_id INTEGER NOT NULL,
-	FOREIGN key (owner_id) REFERENCES users(id),
+	duel_id INTEGER NOT NULL,
+	FOREIGN KEY (owner_id) REFERENCES users(id),
+	FOREIGN KEY (duel_id) REFERENCES duels(id),
 	message TEXT,
 	photo BYTEA
 );
