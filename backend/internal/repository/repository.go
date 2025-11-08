@@ -65,7 +65,7 @@ func New() *Repository {
 		slog.Error("error while connecting to db: ", err.Error())
 	}
 	db.MustExec(schema)
-	
+
 	return &Repository{Db: db}
 }
 

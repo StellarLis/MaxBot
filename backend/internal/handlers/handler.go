@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	middleware "maxbot/internal/middlewares"
 	"maxbot/internal/services"
 	"net/http"
 
@@ -27,7 +28,7 @@ func (h *HttpHandler) New() http.Handler {
 
 	router.GET("/healthy", h.Healthy)
 
-	router.GET("/user/getUserInfo", h.GetUserInfo)
+	router.GET("/user/getUserInfo", middleware.UserExistsOrNot(*h.Service.Repository), h.GetUserInfo)
 	router.GET("/duel/getDuelLogs", h.GetDuelLogs)
 	router.POST("/duel/contribute", h.ContributeToDuel)
 	router.POST("/duel/createNew", h.CreateNewDuel)
@@ -42,6 +43,14 @@ func (h *HttpHandler) Healthy(c *gin.Context) {
 }
 
 func (h *HttpHandler) GetUserInfo(c *gin.Context) {
+
+	userID := c.MustGet("user_id").(int64)
+
+	c.JSON(http.StatusOK, gin.H{
+		"user_id": userID,
+		"message": "User found!",
+	})
+
 	// TODO
 	// Создать middleware в пакете middlewares, который перед получением инфы
 	// о юзере будет проверять, существует ли он в БД по max_id. Если нет, надо создать его.
