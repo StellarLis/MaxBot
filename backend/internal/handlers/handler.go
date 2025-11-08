@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"maxbot/internal/dto"
 	"maxbot/internal/services"
 	"net/http"
 
@@ -14,6 +15,7 @@ type HandlerInterface interface {
 	GetDuelLogs(c *gin.Context)
 	ContributeToDuel(c *gin.Context)
 	CreateNewDuel(c *gin.Context)
+	CreateNewHabit(c *gin.Context)
 }
 
 type HttpHandler struct {
@@ -59,4 +61,26 @@ func (h *HttpHandler) ContributeToDuel(c *gin.Context) {
 
 func (h *HttpHandler) CreateNewDuel(c *gin.Context) {
 	// TODO
+}
+
+func (h *HttpHandler) CreateNewHabit(c *gin.Context) {
+	var createNewHabitDto dto.CreateNewHabitDto
+	if err := c.BindJSON(&createNewHabitDto); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error": "failed to parse data",
+			"details": err.Error(),
+		})
+		return
+	}
+	err := h.Service.CreateHabit(
+		createNewHabitDto.UserId,
+		createNewHabitDto.HabitName,
+		createNewHabitDto.HabitCategory,
+	)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error": "error while creating new habit",
+			"details": err.Error(),
+		})
+	}
 }
