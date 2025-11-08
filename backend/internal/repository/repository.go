@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"database/sql"
 	"fmt"
 	"log/slog"
 	"maxbot/internal/models"
@@ -46,8 +47,8 @@ CREATE TABLE IF NOT EXISTS logs(
 `
 
 type RepositoryInterface interface {
-	CreateUser(max_id string)
-	FindUserByMaxId(max_id string) *models.UserDb
+	CreateUser(max_id string) (*models.UserDb, error)
+	FindUserByMaxId(max_id string) (*models.UserDb, error)
 	Stop()
 }
 
@@ -71,13 +72,37 @@ func New() *Repository {
 
 var _ RepositoryInterface = &Repository{}
 
-func (r *Repository) CreateUser(max_id string) {
-	// TODO
+func (r *Repository) CreateUser(maxID string) (*models.UserDb, error) {
+	var user models.UserDb
+	query := `
+		INSERT INTO users (max_id, streak, wins, loses) 
+		VALUES ($1, $2, $3, $4) 
+		RETURNING id, max_id, streak, wins, loses
+	`
+	err := r.Db.QueryRow(query, maxID, 0, 0, 0).Scan(
+		&user.ID, &user.MaxID, &user.Streak, &user.Wins, &user.Losses,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
 }
 
-func (r *Repository) FindUserByMaxId(max_id string) *models.UserDb {
-	// TODO
-	return &models.UserDb{}
+func (r *Repository) FindUserByMaxId(maxID string) (*models.UserDb, error) {
+	var user models.UserDb
+	err := r.Db.QueryRow(`
+		SELECT id, max_id, streak, wins, loses 
+		FROM users 
+		WHERE max_id = $1
+	`, maxID).Scan(&user.ID, &user.MaxID, &user.Streak, &user.Wins, &user.Losses)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &user, nil
 }
 
 func (r *Repository) Stop() {

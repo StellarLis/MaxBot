@@ -35,6 +35,6 @@ func main() {
 	stoppingSignal := <-stop
 	slog.With("signal", stoppingSignal).Info("stopping application")
 
-    repositoryObj.Stop()
+	repositoryObj.Stop()
 	slog.Info("application stopped")
 }

@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"database/sql"
 	"maxbot/internal/repository"
 	"net/http"
 
@@ -10,43 +9,40 @@ import (
 
 func UserExistsOrNot(repo repository.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		maxIdStr := c.Query("id")
-		if maxIdStr == "" {
+		maxID := c.Query("max_id")
+		if maxID == "" {
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-				"error": "id query parameter is required",
+				"error": "max_id query parameter is required",
 			})
 			return
 		}
 
-		var userId int64
-
-		err := repo.Db.QueryRow(`SELECT id FROM users WHERE max_id = $1`, maxIdStr).Scan(&userId)
+		user, err := repo.FindUserByMaxId(maxID)
 		if err != nil {
-			if err == sql.ErrNoRows {
-				query := `
-					INSERT INTO users (max_id, streak, wins, loses) 
-					VALUES ($1, $2, $3, $4) 
-					RETURNING id
-				`
-				err := repo.Db.QueryRow(query, maxIdStr, 0, 0, 0).Scan(&userId)
-				if err != nil {
-					c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-						"error":   "failed to create user",
-						"details": err.Error(),
-					})
-					return
-				}
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"error":   "database error",
+				"details": err.Error(),
+			})
+			return
+		}
 
-			} else {
+		var message string
+		if user == nil {
+			user, err = repo.CreateUser(maxID)
+			if err != nil {
 				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-					"error":   "database error",
+					"error":   "failed to create user",
 					"details": err.Error(),
 				})
 				return
 			}
+			message = "User created"
+		} else {
+			message = "User found"
 		}
 
-		c.Set("user_id", userId)
+		c.Set("message", message)
+		c.Set("currentUser", user)
 		c.Next()
 	}
 }

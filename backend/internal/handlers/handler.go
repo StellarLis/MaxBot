@@ -2,6 +2,7 @@ package handlers
 
 import (
 	middleware "maxbot/internal/middlewares"
+	"maxbot/internal/models"
 	"maxbot/internal/services"
 	"net/http"
 
@@ -44,18 +45,19 @@ func (h *HttpHandler) Healthy(c *gin.Context) {
 
 func (h *HttpHandler) GetUserInfo(c *gin.Context) {
 
-	userID := c.MustGet("user_id").(int64)
+	message := c.MustGet("message").(string)
+	user := c.MustGet("currentUser").(*models.UserDb)
 
-	c.JSON(http.StatusOK, gin.H{
-		"user_id": userID,
-		"message": "User found!",
-	})
+	resp := models.UserResponse{
+		Message: message,
+		ID:      user.ID,
+		MaxID:   user.MaxID,
+		Streak:  user.Streak,
+		Wins:    user.Wins,
+		Losses:  user.Losses,
+	}
 
-	// TODO
-	// Создать middleware в пакете middlewares, который перед получением инфы
-	// о юзере будет проверять, существует ли он в БД по max_id. Если нет, надо создать его.
-	// Подключить middleware к этой ручке.
-	// max_id получать либо из query, либо из заголовка запроса
+	c.JSON(http.StatusOK, resp)
 }
 
 func (h *HttpHandler) GetDuelLogs(c *gin.Context) {
