@@ -78,6 +78,7 @@ type RepositoryInterface interface {
 	FindUserByMaxId(maxID string) (*models.UserDb, error)
 	CreateHabit(user_id int64, habit_name string, habit_category string) error
 	FindHabitsByUserId(user_id int64) ([]dto.HabitDto, error)
+	FindDuelLogsByUser(user_id int64) ([]dto.LogDto, error)
 	Stop()
 }
 
@@ -179,4 +180,24 @@ func (r *Repository) FindHabitsByUserId(user_id int64) ([]dto.HabitDto, error) {
 		habits = append(habits, habit)
 	}
 	return habits, nil
+}
+
+func (r *Repository) FindDuelLogsByUser(user_id int64) ([]dto.LogDto, error) {
+
+	rows, err := r.Db.Query(
+		`SELECT id, owner_id, message, photo, duel_id FROM logs WHERE owner_id = $1`, user_id,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var logs []dto.LogDto = []dto.LogDto{}
+	for rows.Next() {
+		log := dto.LogDto{}
+		rows.Scan(&log.LogID, &log.OwnerID, &log.Message, &log.Photo, &log.DuelID)
+		logs = append(logs, log)
+	}
+
+	return logs, nil
 }

@@ -9,7 +9,7 @@ import (
 
 type ServiceInterface interface {
 	GetUserInfo(max_id string) dto.UserDto
-	GetDuelLogs(duel_id int) []dto.LogDto
+	GetDuelLogs(user_id int64) ([]dto.LogDto, error)
 	CreateHabit(user_id int64, habit_name string, habit_category string) error
 	GetUserHabits(user_id int64) ([]dto.HabitDto, error)
 }
@@ -25,9 +25,13 @@ func (s *Service) GetUserInfo(max_id string) dto.UserDto {
 	return dto.UserDto{}
 }
 
-func (s *Service) GetDuelLogs(duel_id int) []dto.LogDto {
-	// TODO
-	return []dto.LogDto{}
+func (s *Service) GetDuelLogs(user_id int64) ([]dto.LogDto, error) {
+	logs, err := s.Repository.FindDuelLogsByUser(user_id)
+	if err != nil {
+		return nil, err
+	}
+
+	return logs, nil
 }
 
 func (s *Service) CreateHabit(user_id int64, habit_name string, habit_category string) error {

@@ -6,6 +6,7 @@ import (
 	"maxbot/internal/models"
 	"maxbot/internal/services"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -66,7 +67,25 @@ func (h *HttpHandler) GetUserInfo(c *gin.Context) {
 }
 
 func (h *HttpHandler) GetDuelLogs(c *gin.Context) {
-	// TODO
+	userIDStr := c.Query("id")
+	if userIDStr == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "query parameter 'id' is required"})
+		return
+	}
+
+	userID, err := strconv.ParseInt(userIDStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid 'id': must be an integer"})
+		return
+	}
+
+	logs, err := h.Service.GetDuelLogs(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrieve logs"})
+		return
+	}
+
+	c.JSON(http.StatusOK, logs)
 }
 
 func (h *HttpHandler) ContributeToDuel(c *gin.Context) {
@@ -82,7 +101,7 @@ func (h *HttpHandler) CreateNewHabit(c *gin.Context) {
 	var createNewHabitDto dto.CreateNewHabitDto
 	if err := c.BindJSON(&createNewHabitDto); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"error": "failed to parse data",
+			"error":   "failed to parse data",
 			"details": err.Error(),
 		})
 		return
@@ -94,7 +113,7 @@ func (h *HttpHandler) CreateNewHabit(c *gin.Context) {
 	)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"error": "error while creating new habit",
+			"error":   "error while creating new habit",
 			"details": err.Error(),
 		})
 	}
@@ -108,7 +127,7 @@ func (h *HttpHandler) GetUserHabits(c *gin.Context) {
 	habits, err := h.Service.GetUserHabits(userId)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"error": "error while getting user habits",
+			"error":   "error while getting user habits",
 			"details": err.Error(),
 		})
 		return
