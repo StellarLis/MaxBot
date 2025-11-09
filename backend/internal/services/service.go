@@ -1,9 +1,14 @@
 package services
 
 import (
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
+	"fmt"
 	"maxbot/internal/dto"
 	"maxbot/internal/repository"
+	"time"
 	"unicode/utf8"
 )
 
@@ -12,6 +17,8 @@ type ServiceInterface interface {
 	GetDuelLogs(duel_id int) []dto.LogDto
 	CreateHabit(user_id int64, habit_name string, habit_category string) error
 	GetUserHabits(user_id int64) ([]dto.HabitDto, error)
+	CreateDuelAndGetHash(user_id int64, habit_id int, days int) (string, error)
+	AcceptInvitation(user_id int64, invitationHash string) error
 }
 
 type Service struct {
@@ -48,4 +55,33 @@ func (s *Service) CreateHabit(user_id int64, habit_name string, habit_category s
 
 func (s *Service) GetUserHabits(user_id int64) ([]dto.HabitDto, error) {
 	return s.Repository.FindHabitsByUserId(user_id)
+}
+
+func (s *Service) CreateDuelAndGetHash(user_id int64, habit_id int, days int) (string, error) {
+	if days < 1 || days > 30 {
+		return "", errors.New("days value should be from 1 to 30")
+	}
+	randomBytes := make([]byte, 32)
+	_, err := rand.Read(randomBytes)
+	if err != nil {
+		return "", err
+	}
+	hasher := sha256.New()
+	hasher.Write(randomBytes)
+	hashBytes := hasher.Sum(nil)
+	randomHash := hex.EncodeToString(hashBytes)
+
+	end_date := time.Now().AddDate(0, 0, days).Format("2006-01-02")
+
+	err = s.Repository.CreateDuel(user_id, habit_id, end_date, randomHash)
+	if err != nil {
+		return "", err
+	}
+
+	invitationLink := fmt.Sprintf("https://max.ru/t272_hakaton_bot?startapp=%s", randomHash)
+	return invitationLink, nil
+}
+
+func (s *Service) AcceptInvitation(user_id int64, invitationHash string) error {
+	return s.Repository.ActivateDuelFromInvitationHash(user_id, invitationHash)
 }

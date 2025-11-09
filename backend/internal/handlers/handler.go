@@ -17,6 +17,7 @@ type HandlerInterface interface {
 	GetDuelLogs(c *gin.Context)
 	ContributeToDuel(c *gin.Context)
 	CreateNewDuel(c *gin.Context)
+	AcceptInvitation(c *gin.Context)
 	CreateNewHabit(c *gin.Context)
 	GetUserHabits(c *gin.Context)
 }
@@ -35,7 +36,8 @@ func (h *HttpHandler) New() http.Handler {
 	router.GET("/user/getUserInfo", middleware.UserExistsOrNot(*h.Service.Repository), h.GetUserInfo)
 	router.GET("/duel/getDuelLogs", h.GetDuelLogs)
 	router.POST("/duel/contribute", h.ContributeToDuel)
-	router.POST("/duel/createNew", h.CreateNewDuel)
+	router.POST("/duel/createNew", middleware.UserExistsOrNot(*h.Service.Repository), h.CreateNewDuel)
+	router.POST("/duel/acceptInvitation", middleware.UserExistsOrNot(*h.Service.Repository), h.AcceptInvitation)
 	router.POST("/habit/createNew", middleware.UserExistsOrNot(*h.Service.Repository), h.CreateNewHabit)
 	router.GET("/habit/getUserHabits", middleware.UserExistsOrNot(*h.Service.Repository), h.GetUserHabits)
 
@@ -74,7 +76,28 @@ func (h *HttpHandler) ContributeToDuel(c *gin.Context) {
 }
 
 func (h *HttpHandler) CreateNewDuel(c *gin.Context) {
-	// TODO
+	userId := c.MustGet("currentUser").(*models.UserDb).ID
+	var createNewDuelDto dto.CreateNewDuelDto
+	if err := c.BindJSON(&createNewDuelDto); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error": "failed to parse data",
+			"details": err.Error(),
+		})
+		return
+	}
+	invitationLink, err := h.Service.CreateDuelAndGetHash(
+		userId, createNewDuelDto.HabitId, createNewDuelDto.Days,
+	)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error": "error while creating duel",
+			"details": err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"invitationLink": invitationLink,
+	})
 }
 
 func (h *HttpHandler) CreateNewHabit(c *gin.Context) {
@@ -97,6 +120,7 @@ func (h *HttpHandler) CreateNewHabit(c *gin.Context) {
 			"error": "error while creating new habit",
 			"details": err.Error(),
 		})
+		return
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"message": "successfully created new habit",
@@ -114,4 +138,26 @@ func (h *HttpHandler) GetUserHabits(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, habits)
+}
+
+func (h *HttpHandler) AcceptInvitation(c *gin.Context) {
+	userId := c.MustGet("currentUser").(*models.UserDb).ID
+	var acceptInvitationDto dto.AcceptInvitationDto
+	if err := c.BindJSON(&acceptInvitationDto); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error": "failed to parse data",
+			"details": err.Error(),
+		})
+		return
+	}
+	if err := h.Service.AcceptInvitation(userId, acceptInvitationDto.InvitationHash); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error": "error while accepting invitation",
+			"details": err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"message": "successfully accepted invitation",
+	})
 }
