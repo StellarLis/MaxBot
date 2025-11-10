@@ -1,20 +1,25 @@
 import classes from "./DuelsPageHeader.module.css"
 import DuelsPageHeaderStats from "./Stats/DuelsPageHeaderStats.tsx";
 
+interface DuelsPageHeaderProps {
+    winsCount: number;
+    activeDuels: number;
+    winRate: number;
+}
 
-function DuelsPageHeader() {
+function DuelsPageHeader( { winsCount, activeDuels, winRate }: DuelsPageHeaderProps) {
 
     return (
         <header className={ classes.header }>
             <div className={ classes.headerTitle }>
-                <h1 className={ classes.headerText }>My Duels</h1>
+                <h1 className={ classes.headerText }>Мои Дуэли</h1>
                 <button className={ classes.newButton }
                 >
                     <span className={ classes.plus }>+</span>
-                    New
+                    Создать
                 </button>
             </div>
-            <DuelsPageHeaderStats />
+            <DuelsPageHeaderStats activeDuels={ activeDuels } winsCount={ winsCount } winRate={ winRate } />
         </header>
     );
 }
