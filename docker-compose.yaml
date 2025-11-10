@@ -5,7 +5,7 @@ services:
     environment:
       - DB_USER=postgres
       - DB_PASSWORD=root
-      - DB_PORT=5432
+      - DB_PORT=5433
       - DB_NAME=app_db
     ports:
       - "8080:8080"
@@ -23,7 +23,7 @@ services:
       - POSTGRES_PASSWORD=root
       - POSTGRES_DB=app_db
     ports:
-      - "5432:5432"
+      - "5433:5432"
     networks:
       - app_net
 
