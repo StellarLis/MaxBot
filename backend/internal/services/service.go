@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"maxbot/internal/dto"
+	"maxbot/internal/models"
 	"maxbot/internal/repository"
 	"time"
 	"unicode/utf8"
@@ -15,6 +16,7 @@ import (
 type ServiceInterface interface {
 	GetUserInfo(max_id string) dto.UserDto
 	GetDuelLogs(user_id int64) ([]dto.LogDto, error)
+	CreateDuelLog(ownerID int64, duelID int64, message string, photo []byte) error
 	CreateHabit(user_id int64, habit_name string, habit_category string) error
 	GetUserHabits(user_id int64) ([]dto.HabitDto, error)
 	CreateDuelAndGetHash(user_id int64, habit_id int, days int) (string, error)
@@ -39,6 +41,27 @@ func (s *Service) GetDuelLogs(user_id int64) ([]dto.LogDto, error) {
 	}
 
 	return logs, nil
+}
+
+func (s *Service) CreateDuelLog(ownerID int64, duelID int64, message string, photo []byte) error {
+
+	if len([]rune(message)) > 500 {
+		return errors.New("message too long (max 500 characters)")
+	}
+
+	var photoPtr *[]byte
+	if len(photo) > 0 {
+		photoPtr = &photo
+	}
+
+	log := &models.LogDB{
+		OwnerID: ownerID,
+		DuelID:  duelID,
+		Message: message,  // guaranteed non-empty
+		Photo:   photoPtr, // nil if no photo
+	}
+
+	return s.Repository.CreateDuelLog(log)
 }
 
 func (s *Service) CreateHabit(user_id int64, habit_name string, habit_category string) error {

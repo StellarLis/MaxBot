@@ -1,12 +1,14 @@
 package handlers
 
 import (
+	"encoding/base64"
 	"maxbot/internal/dto"
 	middleware "maxbot/internal/middlewares"
 	"maxbot/internal/models"
 	"maxbot/internal/services"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -36,7 +38,7 @@ func (h *HttpHandler) New() http.Handler {
 
 	router.GET("/user/getUserInfo", middleware.UserExistsOrNot(*h.Service.Repository), h.GetUserInfo)
 	router.GET("/duel/getDuelLogs", h.GetDuelLogs)
-	router.POST("/duel/contribute", h.ContributeToDuel)
+	router.POST("/duel/contribute", middleware.UserExistsOrNot(*h.Service.Repository), h.ContributeToDuel)
 	router.POST("/duel/createNew", middleware.UserExistsOrNot(*h.Service.Repository), h.CreateNewDuel)
 	router.POST("/duel/acceptInvitation", middleware.UserExistsOrNot(*h.Service.Repository), h.AcceptInvitation)
 	router.POST("/habit/createNew", middleware.UserExistsOrNot(*h.Service.Repository), h.CreateNewHabit)
@@ -91,7 +93,44 @@ func (h *HttpHandler) GetDuelLogs(c *gin.Context) {
 }
 
 func (h *HttpHandler) ContributeToDuel(c *gin.Context) {
-	// TODO
+	userID := c.MustGet("currentUser").(*models.UserDb).ID
+
+	var req dto.CreateLogDto
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Invalid request",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	msg := strings.TrimSpace(req.Message)
+	if msg == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "message cannot be empty or whitespace only"})
+		return
+	}
+
+	var photoBytes []byte
+	if req.Photo != "" {
+		var err error
+		photoBytes, err = base64.StdEncoding.DecodeString(req.Photo)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid base64 in 'photo'"})
+			return
+		}
+		if len(photoBytes) > 5*1024*1024 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "photo too large (max 5MB)"})
+			return
+		}
+	}
+
+	err := h.Service.CreateDuelLog(userID, req.DuelID, msg, photoBytes)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save log", "details": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "log added successfully"})
 }
 
 func (h *HttpHandler) CreateNewDuel(c *gin.Context) {
@@ -99,7 +138,7 @@ func (h *HttpHandler) CreateNewDuel(c *gin.Context) {
 	var createNewDuelDto dto.CreateNewDuelDto
 	if err := c.BindJSON(&createNewDuelDto); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"error": "failed to parse data",
+			"error":   "failed to parse data",
 			"details": err.Error(),
 		})
 		return
@@ -109,7 +148,7 @@ func (h *HttpHandler) CreateNewDuel(c *gin.Context) {
 	)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"error": "error while creating duel",
+			"error":   "error while creating duel",
 			"details": err.Error(),
 		})
 		return
@@ -164,14 +203,14 @@ func (h *HttpHandler) AcceptInvitation(c *gin.Context) {
 	var acceptInvitationDto dto.AcceptInvitationDto
 	if err := c.BindJSON(&acceptInvitationDto); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"error": "failed to parse data",
+			"error":   "failed to parse data",
 			"details": err.Error(),
 		})
 		return
 	}
 	if err := h.Service.AcceptInvitation(userId, acceptInvitationDto.InvitationHash); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"error": "error while accepting invitation",
+			"error":   "error while accepting invitation",
 			"details": err.Error(),
 		})
 		return

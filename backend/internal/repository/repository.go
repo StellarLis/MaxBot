@@ -83,6 +83,7 @@ type RepositoryInterface interface {
 	ActivateDuelFromInvitationHash(user_id int64, invitationHash string) error
 	getDuel(duel_id int) (*models.DuelDb, error)
 	FindDuelLogsByUser(user_id int64) ([]dto.LogDto, error)
+	CreateDuelLog(log *models.LogDB) error
 	Stop()
 }
 
@@ -206,6 +207,20 @@ func (r *Repository) FindDuelLogsByUser(user_id int64) ([]dto.LogDto, error) {
 	return logs, nil
 }
 
+func (r *Repository) CreateDuelLog(log *models.LogDB) error {
+	query := `
+		INSERT INTO logs (owner_id, duel_id, message, photo)
+		VALUES ($1, $2, $3, $4)
+	`
+	_, err := r.Db.Exec(
+		query,
+		log.OwnerID,
+		log.DuelID,
+		log.Message,
+		log.Photo,
+	)
+	return err
+}
 
 func (r *Repository) CreateDuel(user_id int64, habit_id int, end_date string, random_hash string) error {
 	var invitedStatusId int
