@@ -46,8 +46,10 @@ CREATE TABLE IF NOT EXISTS duels(
 	FOREIGN KEY (habit_id) REFERENCES habits(id),
 	FOREIGN KEY (user1_id) REFERENCES users(id),
 	FOREIGN KEY (user2_id) REFERENCES users(id),
+	user1_completed INTEGER DEFAULT 0,
+	user2_completed INTEGER DEFAULT 0,
 	start_date DATE NOT NULL DEFAULT CURRENT_DATE,
-	end_date DATE NOT NULL,
+	end_date DATE,
 	winner_id INTEGER DEFAULT NULL,
 	FOREIGN KEY (winner_id) REFERENCES users(id),
 	status_id INTEGER NOT NULL,
@@ -79,7 +81,7 @@ type RepositoryInterface interface {
 	FindUserByMaxId(maxID string) (*models.UserDb, error)
 	CreateHabit(user_id int64, habit_name string, habit_category string) error
 	FindHabitsByUserId(user_id int64) ([]dto.HabitDto, error)
-	CreateDuel(user_id int64, habit_id int, end_date string, random_hash string) error
+	CreateDuel(user_id int64, habit_id int, random_hash string) error
 	ActivateDuelFromInvitationHash(user_id int64, invitationHash string) error
 	getDuel(duel_id int) (*models.DuelDb, error)
 	Stop()
@@ -185,7 +187,7 @@ func (r *Repository) FindHabitsByUserId(user_id int64) ([]dto.HabitDto, error) {
 	return habits, nil
 }
 
-func (r *Repository) CreateDuel(user_id int64, habit_id int, end_date string, random_hash string) error {
+func (r *Repository) CreateDuel(user_id int64, habit_id int, random_hash string) error {
 	var invitedStatusId int
 	err := r.Db.QueryRow(`SELECT id FROM duel_status WHERE value = 'invited'`).Scan(&invitedStatusId)
 	if err != nil {
@@ -193,8 +195,8 @@ func (r *Repository) CreateDuel(user_id int64, habit_id int, end_date string, ra
 	}
 	var duelId int
 	err = r.Db.QueryRow(
-		`INSERT INTO duels (habit_id, user1_id, end_date, status_id) VALUES ($1, $2, $3, $4) RETURNING id`,
-		habit_id, user_id, end_date, invitedStatusId,
+		`INSERT INTO duels (habit_id, user1_id, status_id) VALUES ($1, $2, $3) RETURNING id`,
+		habit_id, user_id, invitedStatusId,
 	).Scan(&duelId)
 	if err != nil {
 		return err
@@ -247,13 +249,15 @@ func (r *Repository) getDuel(duel_id int) (*models.DuelDb, error) {
 	var duelDb models.DuelDb
 	err := r.Db.QueryRow(
 		`SELECT duels.id, duels.habit_id, habits.name,
-		habit_categories.name, duels.user1_id, duels.user2_id, duels.start_date,
+		habit_categories.name, duels.user1_id, duels.user2_id,
+		duels.user1_completed, duels.user2_completed, duels.start_date,
 		duels.end_date, duels.winner_id, duel_status.value FROM duels
 		JOIN habits ON duels.habit_id = habits.id
 		JOIN habit_categories ON habits.habit_category_id = habit_categories.id
 		JOIN duel_status ON duels.status_id = duel_status.id
 		WHERE duels.id = $1`, duel_id,
 	).Scan(&duelDb.Id, &duelDb.HabitId, &duelDb.HabitName, &duelDb.HabitCategory,
+		&duelDb.User1_completed, &duelDb.User2_completed,
 		&duelDb.User1_id, &duelDb.User2_id, &duelDb.StartDate, &duelDb.EndDate,
 		&duelDb.WinnerId, &duelDb.Status)
 	if err != nil {

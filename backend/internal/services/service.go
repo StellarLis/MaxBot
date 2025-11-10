@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"maxbot/internal/dto"
 	"maxbot/internal/repository"
-	"time"
 	"unicode/utf8"
 )
 
@@ -71,9 +70,7 @@ func (s *Service) CreateDuelAndGetHash(user_id int64, habit_id int, days int) (s
 	hashBytes := hasher.Sum(nil)
 	randomHash := hex.EncodeToString(hashBytes)
 
-	end_date := time.Now().AddDate(0, 0, days).Format("2006-01-02")
-
-	err = s.Repository.CreateDuel(user_id, habit_id, end_date, randomHash)
+	err = s.Repository.CreateDuel(user_id, habit_id, randomHash)
 	if err != nil {
 		return "", err
 	}
