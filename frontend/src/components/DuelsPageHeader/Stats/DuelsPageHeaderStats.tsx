@@ -1,12 +1,14 @@
 import classes from "./DuelsPageHeaderStats.module.css"
-import { useState } from "react";
 import StatCard from "./StatCard.tsx";
 import { Flame, Star, Trophy } from "lucide-react";
 
-function DuelsPageHeaderStats() {
-    const [winsCount, setWinsCount] = useState<number>(0);
-    const [activeDuels, setActiveDuels] = useState<number>(0);
-    const [winRate, setWinRate] = useState<number>(0);
+interface DuelsPageHeaderStatsProps {
+    winsCount: number;
+    activeDuels: number;
+    winRate: number;
+}
+
+function DuelsPageHeaderStats( { winsCount, activeDuels, winRate}: DuelsPageHeaderStatsProps) {
 
     const winsCountColors = {
         "iconColor": "#9810fa",
@@ -27,19 +29,19 @@ function DuelsPageHeaderStats() {
         <div className={classes.statsContainer}>
             <StatCard
                 Icon={ Trophy }
-                title={ "Wins" }
+                title={ "Победы" }
                 value={ winsCount }
                 colors={ winsCountColors }
             />
             <StatCard
                 Icon={ Flame }
-                title={ "Active" }
+                title={ "Активные" }
                 value={ activeDuels }
                 colors={ activeDuelsColors }
             />
             <StatCard
                 Icon={ Star }
-                title={ "Win Rate" }
+                title={ "Доля побед" }
                 value={ winRate }
                 colors={ winRateColors }
             />
