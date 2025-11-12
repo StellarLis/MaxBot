@@ -97,6 +97,7 @@ type RepositoryInterface interface {
 	IncrementUserStreakAndUpdateLastTimeContributed(user *models.UserDb) error
 	ResetUserStreakToOneAndUpdateLastTimeContributed(user *models.UserDb) error
 	IncrementWinCounter(user *models.UserDb) error
+	HasUserContributedToDuelToday(userID int64, duelID int64, date string) (bool, error)
 	Stop()
 }
 
@@ -164,7 +165,7 @@ func (r *Repository) FindUserById(id int64) (*models.UserDb, error) {
 		WHERE id = $1
 	`, id).Scan(&user.ID, &user.MaxID, &user.FirstName, &user.PhotoUrl, &user.Streak,
 		&user.Wins, &user.LastTimeContributed)
-	
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -379,36 +380,54 @@ func (r *Repository) FindDuelsByUserId(user_id int64) ([]models.DuelDb, error) {
 	return duels, nil
 }
 
-func (r *Repository) IncrementDuelCounter(duel *models.DuelDb, user_id int64) (bool, error) {
+func (r *Repository) IncrementDuelCounter(duel *models.DuelDb, userID int64) (bool, error) {
+
 	var counter int
-	if duel.User1_id == user_id {
-		var counter int
-		err := r.Db.QueryRow(
-			`UPDATE duels SET user1_completed = user1_completed + 1 WHERE id = $1 RETURNING user1_completed`,
+
+	switch {
+	case duel.User1_id == userID:
+		if err := r.Db.QueryRow(
+			`UPDATE duels
+             SET user1_completed = user1_completed + 1
+             WHERE id = $1
+             RETURNING user1_completed`,
 			duel.Id,
-		).Scan(counter)
-		if err != nil {
+		).Scan(&counter); err != nil {
 			return false, err
 		}
-	} else if duel.User2_id.Int64 == user_id {
-		var counter int
-		err := r.Db.QueryRow(
-			`UPDATE duels SET user2_completed = user2_completed + 1 WHERE id = $1 RETURNING user2_completed`,
+
+	case duel.User2_id.Valid && duel.User2_id.Int64 == userID:
+		if err := r.Db.QueryRow(
+			`UPDATE duels
+             SET user2_completed = user2_completed + 1
+             WHERE id = $1
+             RETURNING user2_completed`,
 			duel.Id,
-		).Scan(counter)
-		if err != nil {
+		).Scan(&counter); err != nil {
 			return false, err
 		}
+
+	default:
+		return false, errors.New("user is not a participant of this duel")
 	}
+
 	won := false
 	if counter >= duel.Duration {
 		won = true
-		_, err := r.Db.Exec(`UPDATE duels SET winner_id = $1, end_date = $2, status = 3 WHERE id = $3`,
-			user_id, time.Now().Format("2006-01-02"), duel.Id)
-		if err != nil {
-			return false, nil
+		if _, err := r.Db.Exec(
+			`UPDATE duels
+             SET winner_id = $1,
+                 end_date  = $2,
+                 status_id = 3
+             WHERE id = $3`,
+			userID,
+			time.Now().Format("2006-01-02"),
+			duel.Id,
+		); err != nil {
+			return false, err
 		}
 	}
+
 	return won, nil
 }
 
@@ -434,4 +453,19 @@ func (r *Repository) IncrementWinCounter(user *models.UserDb) error {
 		return err
 	}
 	return nil
+}
+
+func (r *Repository) HasUserContributedToDuelToday(userID int64, duelID int64, date string) (bool, error) {
+	var exists bool
+	err := r.Db.QueryRow(`
+        SELECT EXISTS (
+            SELECT 1 
+            FROM logs 
+            WHERE owner_id = $1 
+              AND duel_id = $2
+              AND created_at = $3
+        )
+    `, userID, duelID, date).Scan(&exists)
+
+	return exists, err
 }

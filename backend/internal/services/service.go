@@ -51,8 +51,8 @@ func (s *Service) CreateDuelLog(user *models.UserDb, ownerID int64, duelID int64
 	log := &models.LogDB{
 		OwnerID: ownerID,
 		DuelID:  duelID,
-		Message: message,  // guaranteed non-empty
-		Photo:   photoPtr, // nil if no photo
+		Message: message,
+		Photo:   photoPtr,
 	}
 
 	duel, err := s.Repository.GetDuelById(duelID)
@@ -62,46 +62,65 @@ func (s *Service) CreateDuelLog(user *models.UserDb, ownerID int64, duelID int64
 	if duel.Status != "active" {
 		return errors.New("duel is not active")
 	}
-	todaysDateStr := time.Now().Format("2006-01-02")
-	if user.LastTimeContributed.String == todaysDateStr {
-		return errors.New("user has already contributed today")
+
+	// Проверка, что user – участник дуэли
+	if duel.User1_id != ownerID && (!duel.User2_id.Valid || duel.User2_id.Int64 != ownerID) {
+		return errors.New("user is not a participant of this duel")
 	}
 
-	err = s.Repository.CreateDuelLog(log)
+	today := time.Now().Format("2006-01-02")
+
+	alreadyLogged, err := s.Repository.HasUserContributedToDuelToday(ownerID, duelID, today)
 	if err != nil {
 		return err
 	}
 
-	// Log has been created, check and change duel
+	if alreadyLogged {
+		return errors.New("you have already contributed to this duel today")
+	}
+
+	if err := s.Repository.CreateDuelLog(log); err != nil {
+		return err
+	}
+
+	// Проверяем прогресс по дуэли
 	won, err := s.Repository.IncrementDuelCounter(duel, ownerID)
-	// Update user's streak and last time contributed
-	if user.LastTimeContributed.String != "" {
-		userLastTimeContributedDate, err := time.Parse("2006-01-02", user.LastTimeContributed.String)
+	if err != nil {
+		return err
+	}
+
+	// Обновляем СТРИК ТОЛЬКО если это первая "учтённая" запись за день
+	switch {
+	case user.LastTimeContributed.String == today:
+		// Уже был лог сегодня - стрик уже обновлён, ничего не делаем.
+
+	case user.LastTimeContributed.String == "":
+		// Первая запись
+		if err := s.Repository.ResetUserStreakToOneAndUpdateLastTimeContributed(user); err != nil {
+			return err
+		}
+
+	default:
+		lastDate, err := time.Parse("2006-01-02", user.LastTimeContributed.String)
 		if err != nil {
 			return err
 		}
-		if userLastTimeContributedDate.Add(24 * time.Hour).Format("2006-01-02") == todaysDateStr {
-			err = s.Repository.IncrementUserStreakAndUpdateLastTimeContributed(user)
-			if err != nil {
+
+		// Вчера был лог => продолжаем стрик
+		if lastDate.Add(24*time.Hour).Format("2006-01-02") == today {
+			if err := s.Repository.IncrementUserStreakAndUpdateLastTimeContributed(user); err != nil {
 				return err
 			}
 		} else {
-			err = s.Repository.ResetUserStreakToOneAndUpdateLastTimeContributed(user)
-			if err != nil {
+			// Стрик закончился => сбрасываем и начинаем новый
+			if err := s.Repository.ResetUserStreakToOneAndUpdateLastTimeContributed(user); err != nil {
 				return err
 			}
 		}
-	} else {
-		err = s.Repository.ResetUserStreakToOneAndUpdateLastTimeContributed(user)
-		if err != nil {
-			return err
-		}
 	}
-		
-	// Update user's wins if won
+
 	if won {
-		err = s.Repository.IncrementWinCounter(user)
-		if err != nil {
+		if err := s.Repository.IncrementWinCounter(user); err != nil {
 			return err
 		}
 	}
