@@ -1,11 +1,15 @@
 package models
 
+import "database/sql"
+
 type UserDb struct {
-	ID     int64  `db:"id" json:"id"`
-	MaxID  string `db:"max_id" json:"max_id"`
-	Streak int64  `db:"streak" json:"streak"`
-	Wins   int64  `db:"wins" json:"wins"`
-	Losses int64  `db:"loses" json:"loses"`
+	ID                  int64          `db:"id" json:"id"`
+	MaxID               string         `db:"max_id" json:"max_id"`
+	FirstName           string         `db:"first_name" json:"first_name"`
+	PhotoUrl            string         `db:"photo_url" json:"photo_url"`
+	Streak              int            `db:"streak" json:"streak"`
+	Wins                int            `db:"wins" json:"wins"`
+	LastTimeContributed sql.NullString `db:"last_time_contributed" json:"last_time_contributed"`
 }
 
 type UserResponse struct {

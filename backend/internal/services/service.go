@@ -9,13 +9,13 @@ import (
 	"maxbot/internal/dto"
 	"maxbot/internal/models"
 	"maxbot/internal/repository"
+	"time"
 	"unicode/utf8"
 )
 
 type ServiceInterface interface {
-	GetUserInfo(max_id string) dto.UserDto
 	GetDuelLogs(user_id int64) ([]dto.LogDto, error)
-	CreateDuelLog(ownerID int64, duelID int64, message string, photo []byte) error
+	CreateDuelLog(user *models.UserDb, ownerID int64, duelID int64, message string, photo []byte) error
 	CreateHabit(user_id int64, habit_name string, habit_category string) error
 	GetUserHabits(user_id int64) ([]dto.HabitDto, error)
 	CreateDuelAndGetHash(user_id int64, habit_id int, days int) (string, error)
@@ -28,11 +28,6 @@ type Service struct {
 
 var _ ServiceInterface = &Service{}
 
-func (s *Service) GetUserInfo(max_id string) dto.UserDto {
-	// TODO
-	return dto.UserDto{}
-}
-
 func (s *Service) GetDuelLogs(user_id int64) ([]dto.LogDto, error) {
 	logs, err := s.Repository.FindDuelLogsByUser(user_id)
 	if err != nil {
@@ -42,7 +37,7 @@ func (s *Service) GetDuelLogs(user_id int64) ([]dto.LogDto, error) {
 	return logs, nil
 }
 
-func (s *Service) CreateDuelLog(ownerID int64, duelID int64, message string, photo []byte) error {
+func (s *Service) CreateDuelLog(user *models.UserDb, ownerID int64, duelID int64, message string, photo []byte) error {
 
 	if len([]rune(message)) > 500 {
 		return errors.New("message too long (max 500 characters)")
@@ -60,7 +55,58 @@ func (s *Service) CreateDuelLog(ownerID int64, duelID int64, message string, pho
 		Photo:   photoPtr, // nil if no photo
 	}
 
-	return s.Repository.CreateDuelLog(log)
+	duel, err := s.Repository.GetDuelById(duelID)
+	if err != nil {
+		return err
+	}
+	if duel.Status != "active" {
+		return errors.New("duel is not active")
+	}
+	todaysDateStr := time.Now().Format("2006-01-02")
+	if user.LastTimeContributed.String == todaysDateStr {
+		return errors.New("user has already contributed today")
+	}
+
+	err = s.Repository.CreateDuelLog(log)
+	if err != nil {
+		return err
+	}
+
+	// Log has been created, check and change duel
+	won, err := s.Repository.IncrementDuelCounter(duel, ownerID)
+	// Update user's streak and last time contributed
+	if user.LastTimeContributed.String != "" {
+		userLastTimeContributedDate, err := time.Parse("2006-01-02", user.LastTimeContributed.String)
+		if err != nil {
+			return err
+		}
+		if userLastTimeContributedDate.Add(24 * time.Hour).Format("2006-01-02") == todaysDateStr {
+			err = s.Repository.IncrementUserStreakAndUpdateLastTimeContributed(user)
+			if err != nil {
+				return err
+			}
+		} else {
+			err = s.Repository.ResetUserStreakToOneAndUpdateLastTimeContributed(user)
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		err = s.Repository.ResetUserStreakToOneAndUpdateLastTimeContributed(user)
+		if err != nil {
+			return err
+		}
+	}
+		
+	// Update user's wins if won
+	if won {
+		err = s.Repository.IncrementWinCounter(user)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (s *Service) CreateHabit(user_id int64, habit_name string, habit_category string) error {
@@ -97,7 +143,7 @@ func (s *Service) CreateDuelAndGetHash(user_id int64, habit_id int, days int) (s
 	hashBytes := hasher.Sum(nil)
 	randomHash := hex.EncodeToString(hashBytes)
 
-	err = s.Repository.CreateDuel(user_id, habit_id, randomHash)
+	err = s.Repository.CreateDuel(user_id, habit_id, randomHash, days)
 	if err != nil {
 		return "", err
 	}

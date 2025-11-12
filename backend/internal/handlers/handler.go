@@ -54,17 +54,35 @@ func (h *HttpHandler) Healthy(c *gin.Context) {
 }
 
 func (h *HttpHandler) GetUserInfo(c *gin.Context) {
-
-	message := c.MustGet("message").(string)
 	user := c.MustGet("currentUser").(*models.UserDb)
+	duels, err := h.Service.Repository.FindDuelsByUserId(user.ID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Invalid request",
+			"details": err.Error(),
+		})
+		return
+	}
 
-	resp := models.UserResponse{
-		Message: message,
-		ID:      user.ID,
-		MaxID:   user.MaxID,
-		Streak:  user.Streak,
-		Wins:    user.Wins,
-		Losses:  user.Losses,
+	var endedDuelsCounter = 0
+	for _, duel := range duels {
+		if duel.Status == "ended" {
+			endedDuelsCounter++
+		}
+	}
+	var winrate float32 = 0
+	if endedDuelsCounter != 0 {
+		winrate = float32(user.Wins) / float32(endedDuelsCounter)
+	}
+
+	resp := dto.UserDto{
+		Streak: user.Streak,
+		Wins: user.Wins,
+		Winrate: winrate,
+		FirstName: user.FirstName,
+		PhotoUrl: user.PhotoUrl,
+		LastTimeContributed: user.LastTimeContributed.String,
+		DuelsInfo: duels,
 	}
 
 	c.JSON(http.StatusOK, resp)
@@ -93,7 +111,7 @@ func (h *HttpHandler) GetDuelLogs(c *gin.Context) {
 }
 
 func (h *HttpHandler) ContributeToDuel(c *gin.Context) {
-	userID := c.MustGet("currentUser").(*models.UserDb).ID
+	user := c.MustGet("currentUser").(*models.UserDb)
 
 	var req dto.CreateLogDto
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -124,7 +142,7 @@ func (h *HttpHandler) ContributeToDuel(c *gin.Context) {
 		}
 	}
 
-	err := h.Service.CreateDuelLog(userID, req.DuelID, msg, photoBytes)
+	err := h.Service.CreateDuelLog(user, user.ID, req.DuelID, msg, photoBytes)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save log", "details": err.Error()})
 		return

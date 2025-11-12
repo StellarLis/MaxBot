@@ -20,28 +20,35 @@ func UserExistsOrNot(repo repository.Repository) gin.HandlerFunc {
 		user, err := repo.FindUserByMaxId(maxID)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-				"error":   "database error",
+				"error":   "internal error",
 				"details": err.Error(),
 			})
 			return
 		}
-
-		var message string
-		if user == nil {
-			user, err = repo.CreateUser(maxID)
-			if err != nil {
-				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-					"error":   "failed to create user",
-					"details": err.Error(),
-				})
-				return
-			}
-			message = "User created"
-		} else {
-			message = "User found"
+		if user != nil {
+			c.Set("currentUser", user)
+			c.Next()
+			return
 		}
 
-		c.Set("message", message)
+		// If user was not found, create it!
+		firstName := c.Query("first_name")
+		if firstName == "" {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+				"error": "first_name query parameter is required",
+			})
+			return
+		}
+		photo_url := c.Query("photo_url")
+
+		user, err = repo.CreateUser(maxID, firstName, photo_url)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"error":   "failed to create user",
+				"details": err.Error(),
+			})
+			return
+		}
 		c.Set("currentUser", user)
 		c.Next()
 	}
