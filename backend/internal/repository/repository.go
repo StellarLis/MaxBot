@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"math/rand"
 	"maxbot/internal/dto"
 	"maxbot/internal/models"
 	"os"
@@ -98,6 +99,7 @@ type RepositoryInterface interface {
 	ResetUserStreakToOneAndUpdateLastTimeContributed(user *models.UserDb) error
 	IncrementWinCounter(user *models.UserDb) error
 	HasUserContributedToDuelToday(userID int64, duelID int64, date string) (bool, error)
+	CreateTestData() error
 	Stop()
 }
 
@@ -468,4 +470,113 @@ func (r *Repository) HasUserContributedToDuelToday(userID int64, duelID int64, d
     `, userID, duelID, date).Scan(&exists)
 
 	return exists, err
+}
+
+// -- For dev testing -- //
+func (r *Repository) CreateTestData() error {
+	// ---------- AVATARS ----------
+	photos := []string{
+		"https://static.wikia.nocookie.net/9ce54273-1acd-4741-a95e-2c901171c601",
+		"https://i.ytimg.com/vi/2USReOiv4Jo/maxresdefault.jpg?sqp=-oaymwEmCIAKENAF8quKqQMa8AEB-AG-B4AC0AWKAgwIABABGF0gZShRMA8=&rs=AOn4CLCNndY8PifvrzmgB8Oq0hztsb_gyw",
+		"https://avatars.mds.yandex.net/i?id=9b5e61534a673320d4b1e4630a9fd02fff6759b0-13934628-images-thumbs&n=13",
+		"https://avatars.mds.yandex.net/i?id=d8b749ef8f2c051edbec63ac66459fe576e5750f-9895871-images-thumbs&n=13",
+	}
+
+	rand.Seed(time.Now().UnixNano())
+
+	// ---------- USERS ----------
+	users := []struct {
+		MaxID string
+		Name  string
+	}{
+		{"MAXID_1", "User 1"},
+		{"MAXID_2", "User 2"},
+		{"MAXID_3", "User 3"},
+		{"MAXID_4", "User 4"},
+	}
+
+	userIDs := make(map[string]int64, len(users))
+
+	for _, u := range users {
+		var id int64
+
+		photo := photos[rand.Intn(len(photos))]
+
+		// ⚠️ если колонка у тебя называется не photo_url — поменяй тут и в SET
+		if err := r.Db.QueryRow(`
+			INSERT INTO users (max_id, first_name, streak, wins, photo_url)
+			VALUES ($1, $2, 0, 0, $3)
+			ON CONFLICT (max_id) DO UPDATE
+				SET first_name = EXCLUDED.first_name,
+				    photo_url  = EXCLUDED.photo_url
+			RETURNING id
+		`, u.MaxID, u.Name, photo).Scan(&id); err != nil {
+			return err
+		}
+		userIDs[u.MaxID] = id
+	}
+
+	// ---------- HABIT CATEGORY ----------
+	var habitCategoryID int64
+	if err := r.Db.QueryRow(`
+		INSERT INTO habit_categories (user_id, name)
+		VALUES ($1, $2)
+		RETURNING id
+	`, userIDs["MAXID_1"], "General").Scan(&habitCategoryID); err != nil {
+		return err
+	}
+
+	// ---------- HABITS ----------
+	habits := []string{
+		"Soccer",
+		"Drinking water",
+		"Not smoking",
+		"Reading books",
+	}
+
+	habitIDs := make([]int64, 0, len(habits))
+
+	for _, hName := range habits {
+		var id int64
+		if err := r.Db.QueryRow(`
+			INSERT INTO habits (user_id, habit_category_id, name)
+			VALUES ($1, $2, $3)
+			RETURNING id
+		`, userIDs["MAXID_1"], habitCategoryID, hName).Scan(&id); err != nil {
+			return err
+		}
+		habitIDs = append(habitIDs, id)
+	}
+
+	// ---------- DUEL STATUS (active) ----------
+	var activeStatusID int
+	if err := r.Db.QueryRow(`
+		SELECT id FROM duel_status WHERE value = 'active'
+	`).Scan(&activeStatusID); err != nil {
+		return err
+	}
+
+	// ---------- DUELS ----------
+
+	// Duel 1: User1 vs User2
+	var duel1ID int64
+	if err := r.Db.QueryRow(`
+		INSERT INTO duels (duration, habit_id, user1_id, user2_id, status_id)
+		VALUES ($1, $2, $3, $4, $5)
+		RETURNING id
+	`, 5, habitIDs[0], userIDs["MAXID_1"], userIDs["MAXID_2"], activeStatusID).Scan(&duel1ID); err != nil {
+		return err
+	}
+
+	// Duel 2: User3 vs User4
+	var duel2ID int64
+	if err := r.Db.QueryRow(`
+		INSERT INTO duels (duration, habit_id, user1_id, user2_id, status_id)
+		VALUES ($1, $2, $3, $4, $5)
+		RETURNING id
+	`, 7, habitIDs[1], userIDs["MAXID_3"], userIDs["MAXID_4"], activeStatusID).Scan(&duel2ID); err != nil {
+		return err
+	}
+
+	return nil
 }

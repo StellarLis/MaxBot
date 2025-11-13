@@ -23,6 +23,7 @@ type HandlerInterface interface {
 	AcceptInvitation(c *gin.Context)
 	CreateNewHabit(c *gin.Context)
 	GetUserHabits(c *gin.Context)
+	MakeTestData(c *gin.Context)
 }
 
 type HttpHandler struct {
@@ -43,6 +44,7 @@ func (h *HttpHandler) New() http.Handler {
 	router.POST("/duel/acceptInvitation", middleware.UserExistsOrNot(*h.Service.Repository), h.AcceptInvitation)
 	router.POST("/habit/createNew", middleware.UserExistsOrNot(*h.Service.Repository), h.CreateNewHabit)
 	router.GET("/habit/getUserHabits", middleware.UserExistsOrNot(*h.Service.Repository), h.GetUserHabits)
+	router.POST("/test/makeTestData", h.MakeTestData)
 
 	return router.Handler()
 }
@@ -76,13 +78,13 @@ func (h *HttpHandler) GetUserInfo(c *gin.Context) {
 	}
 
 	resp := dto.UserDto{
-		Streak: user.Streak,
-		Wins: user.Wins,
-		Winrate: winrate,
-		FirstName: user.FirstName,
-		PhotoUrl: user.PhotoUrl,
+		Streak:              user.Streak,
+		Wins:                user.Wins,
+		Winrate:             winrate,
+		FirstName:           user.FirstName,
+		PhotoUrl:            user.PhotoUrl,
 		LastTimeContributed: user.LastTimeContributed.String,
-		DuelsInfo: duels,
+		DuelsInfo:           duels,
 	}
 
 	c.JSON(http.StatusOK, resp)
@@ -235,5 +237,20 @@ func (h *HttpHandler) AcceptInvitation(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"message": "successfully accepted invitation",
+	})
+}
+
+// --For dev testing-- //
+func (h *HttpHandler) MakeTestData(c *gin.Context) {
+	if err := h.Service.CreateTestData(); err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error":   "error while creating test data",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "successfully created test data",
 	})
 }
