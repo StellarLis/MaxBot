@@ -14,6 +14,8 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// ~/go/bin/swag init -g cmd/main/main.go --parseDependency --parseInternal --parseDepth 1
+
 // @title MaxBot API docs
 // @version 0.9
 // @description Documentation for "Habit Duels" project

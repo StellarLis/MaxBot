@@ -110,7 +110,7 @@ func (h *HttpHandler) GetUserInfo(c *gin.Context) {
 // @Summary      Get logs of a duel
 // @Accept       json
 // @Produce      json
-// @Param        user_id   query      string  true  "User ID"
+// @Param        id   query      string  true  "User ID"
 // @Success      200  {object}  []dto.LogDto
 // @Failure      400  {object} dto.ErrorDto
 // @Router       /duel/getDuelLogs [get]
