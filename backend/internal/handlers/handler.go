@@ -13,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files" // swagger embed files
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"github.com/gin-contrib/cors"
 
 	_ "maxbot/docs"
 )
@@ -38,6 +39,7 @@ var _ HandlerInterface = &HttpHandler{}
 
 func (h *HttpHandler) New() http.Handler {
 	router := gin.Default()
+	router.Use(cors.Default())
 
 	router.GET("/healthy", h.Healthy)
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
