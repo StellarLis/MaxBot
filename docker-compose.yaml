@@ -8,8 +8,6 @@ services:
       - backend-service
     networks:
       - app_net
-    volumes:
-      - ./frontend:/app
   backend-service:
     build: ./backend
     container_name: backend-service

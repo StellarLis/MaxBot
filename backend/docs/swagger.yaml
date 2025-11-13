@@ -1,0 +1,405 @@
+definitions:
+  maxbot_internal_dto.AcceptInvitationDto:
+    properties:
+      invitation_hash:
+        type: string
+    type: object
+  maxbot_internal_dto.CreateLogDto:
+    properties:
+      duel_id:
+        type: integer
+      message:
+        description: required, non-empty
+        minLength: 1
+        type: string
+      photo:
+        description: base64, optional
+        type: string
+    required:
+    - duel_id
+    - message
+    type: object
+  maxbot_internal_dto.CreateNewDuelDto:
+    properties:
+      days:
+        type: integer
+      habit_id:
+        type: integer
+    type: object
+  maxbot_internal_dto.CreateNewHabitDto:
+    properties:
+      habit_category:
+        type: string
+      habit_name:
+        type: string
+    type: object
+  maxbot_internal_dto.ErrorDto:
+    properties:
+      details:
+        type: string
+      error:
+        type: string
+    type: object
+  maxbot_internal_dto.HabitDto:
+    properties:
+      category:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  maxbot_internal_dto.InvitationLinkDto:
+    properties:
+      invitation_link:
+        type: string
+    type: object
+  maxbot_internal_dto.LogDto:
+    properties:
+      created_at:
+        type: string
+      duel_id:
+        type: integer
+      log_id:
+        type: integer
+      message:
+        type: string
+      owner_id:
+        type: integer
+      photo:
+        items:
+          type: integer
+        type: array
+    type: object
+  maxbot_internal_dto.MessageDto:
+    properties:
+      message:
+        type: string
+    type: object
+  maxbot_internal_dto.UserDto:
+    properties:
+      duels_info:
+        description: Дуэльки в которых участвует юзер
+        items:
+          $ref: '#/definitions/maxbot_internal_models.DuelDb'
+        type: array
+      first_name:
+        type: string
+      last_time_contributed:
+        type: string
+      photo_url:
+        type: string
+      streak:
+        description: Стрик из привычек
+        type: integer
+      winrate:
+        description: Винрейт сразу в процентах
+        type: number
+      wins:
+        description: Победы
+        type: integer
+    type: object
+  maxbot_internal_models.DuelDb:
+    properties:
+      duration_in_days:
+        type: integer
+      end_date:
+        $ref: '#/definitions/sql.NullString'
+      habit_category:
+        type: string
+      habit_id:
+        type: integer
+      habit_name:
+        type: string
+      id:
+        type: integer
+      start_date:
+        type: string
+      status:
+        type: string
+      user1_completed:
+        type: integer
+      user1_first_name:
+        type: string
+      user1_id:
+        type: integer
+      user1_photo_url:
+        $ref: '#/definitions/sql.NullString'
+      user2_completed:
+        type: integer
+      user2_first_name:
+        $ref: '#/definitions/sql.NullString'
+      user2_id:
+        $ref: '#/definitions/sql.NullInt64'
+      user2_photo_url:
+        $ref: '#/definitions/sql.NullString'
+      winner_id:
+        $ref: '#/definitions/sql.NullInt64'
+    type: object
+  sql.NullInt64:
+    properties:
+      int64:
+        format: int64
+        type: integer
+      valid:
+        description: Valid is true if Int64 is not NULL
+        type: boolean
+    type: object
+  sql.NullString:
+    properties:
+      string:
+        type: string
+      valid:
+        description: Valid is true if String is not NULL
+        type: boolean
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Documentation for "Habit Duels" project
+  title: MaxBot API docs
+  version: "0.9"
+paths:
+  /duel/acceptInvitation:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Max ID
+        in: query
+        name: max_id
+        required: true
+        type: string
+      - description: First Name
+        in: query
+        name: first_name
+        required: true
+        type: string
+      - description: Photo URL
+        in: query
+        name: photo_url
+        required: true
+        type: string
+      - description: Accept Invitation Dto
+        in: body
+        name: accept_invitation_dto
+        required: true
+        schema:
+          $ref: '#/definitions/maxbot_internal_dto.AcceptInvitationDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/maxbot_internal_dto.MessageDto'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/maxbot_internal_dto.ErrorDto'
+      summary: Accept invitation to duel using invitation hash
+  /duel/contribute:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Max ID
+        in: query
+        name: max_id
+        required: true
+        type: string
+      - description: First Name
+        in: query
+        name: first_name
+        required: true
+        type: string
+      - description: Photo URL
+        in: query
+        name: photo_url
+        required: true
+        type: string
+      - description: Create Log Dto
+        in: body
+        name: create_log_dto
+        required: true
+        schema:
+          $ref: '#/definitions/maxbot_internal_dto.CreateLogDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/maxbot_internal_dto.MessageDto'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/maxbot_internal_dto.ErrorDto'
+      summary: Contribute to duel, sending your message and photo
+  /duel/createNew:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Max ID
+        in: query
+        name: max_id
+        required: true
+        type: string
+      - description: First Name
+        in: query
+        name: first_name
+        required: true
+        type: string
+      - description: Photo URL
+        in: query
+        name: photo_url
+        required: true
+        type: string
+      - description: Create New Duel Dto
+        in: body
+        name: create_new_duel_dto
+        required: true
+        schema:
+          $ref: '#/definitions/maxbot_internal_dto.CreateNewDuelDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/maxbot_internal_dto.InvitationLinkDto'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/maxbot_internal_dto.ErrorDto'
+      summary: Create new duel
+  /duel/getDuelLogs:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: query
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/maxbot_internal_dto.LogDto'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/maxbot_internal_dto.ErrorDto'
+      summary: Get logs of a duel
+  /habit/createNew:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Max ID
+        in: query
+        name: max_id
+        required: true
+        type: string
+      - description: First Name
+        in: query
+        name: first_name
+        required: true
+        type: string
+      - description: Photo URL
+        in: query
+        name: photo_url
+        required: true
+        type: string
+      - description: Create New Habit Dto
+        in: body
+        name: create_new_habit_dto
+        required: true
+        schema:
+          $ref: '#/definitions/maxbot_internal_dto.CreateNewHabitDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/maxbot_internal_dto.MessageDto'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/maxbot_internal_dto.ErrorDto'
+      summary: Create new habit
+  /habit/getUserHabits:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Max ID
+        in: query
+        name: max_id
+        required: true
+        type: string
+      - description: First Name
+        in: query
+        name: first_name
+        required: true
+        type: string
+      - description: Photo URL
+        in: query
+        name: photo_url
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/maxbot_internal_dto.HabitDto'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/maxbot_internal_dto.ErrorDto'
+      summary: Get user habits
+  /user/getUserInfo:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Max ID
+        in: query
+        name: max_id
+        required: true
+        type: string
+      - description: First Name
+        in: query
+        name: first_name
+        required: true
+        type: string
+      - description: Photo URL
+        in: query
+        name: photo_url
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/maxbot_internal_dto.UserDto'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/maxbot_internal_dto.ErrorDto'
+      summary: Get user information, including duels he is participating in
+swagger: "2.0"

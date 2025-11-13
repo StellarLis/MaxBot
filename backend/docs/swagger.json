@@ -1,0 +1,610 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Documentation for \"Habit Duels\" project",
+        "title": "MaxBot API docs",
+        "contact": {},
+        "version": "0.9"
+    },
+    "host": "localhost:8080",
+    "paths": {
+        "/duel/acceptInvitation": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Accept invitation to duel using invitation hash",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Max ID",
+                        "name": "max_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "First Name",
+                        "name": "first_name",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Photo URL",
+                        "name": "photo_url",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "Accept Invitation Dto",
+                        "name": "accept_invitation_dto",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/maxbot_internal_dto.AcceptInvitationDto"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/maxbot_internal_dto.MessageDto"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/maxbot_internal_dto.ErrorDto"
+                        }
+                    }
+                }
+            }
+        },
+        "/duel/contribute": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Contribute to duel, sending your message and photo",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Max ID",
+                        "name": "max_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "First Name",
+                        "name": "first_name",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Photo URL",
+                        "name": "photo_url",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "Create Log Dto",
+                        "name": "create_log_dto",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/maxbot_internal_dto.CreateLogDto"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/maxbot_internal_dto.MessageDto"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/maxbot_internal_dto.ErrorDto"
+                        }
+                    }
+                }
+            }
+        },
+        "/duel/createNew": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Create new duel",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Max ID",
+                        "name": "max_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "First Name",
+                        "name": "first_name",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Photo URL",
+                        "name": "photo_url",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "Create New Duel Dto",
+                        "name": "create_new_duel_dto",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/maxbot_internal_dto.CreateNewDuelDto"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/maxbot_internal_dto.InvitationLinkDto"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/maxbot_internal_dto.ErrorDto"
+                        }
+                    }
+                }
+            }
+        },
+        "/duel/getDuelLogs": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get logs of a duel",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/maxbot_internal_dto.LogDto"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/maxbot_internal_dto.ErrorDto"
+                        }
+                    }
+                }
+            }
+        },
+        "/habit/createNew": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Create new habit",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Max ID",
+                        "name": "max_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "First Name",
+                        "name": "first_name",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Photo URL",
+                        "name": "photo_url",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "Create New Habit Dto",
+                        "name": "create_new_habit_dto",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/maxbot_internal_dto.CreateNewHabitDto"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/maxbot_internal_dto.MessageDto"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/maxbot_internal_dto.ErrorDto"
+                        }
+                    }
+                }
+            }
+        },
+        "/habit/getUserHabits": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get user habits",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Max ID",
+                        "name": "max_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "First Name",
+                        "name": "first_name",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Photo URL",
+                        "name": "photo_url",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/maxbot_internal_dto.HabitDto"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/maxbot_internal_dto.ErrorDto"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/getUserInfo": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get user information, including duels he is participating in",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Max ID",
+                        "name": "max_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "First Name",
+                        "name": "first_name",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Photo URL",
+                        "name": "photo_url",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/maxbot_internal_dto.UserDto"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/maxbot_internal_dto.ErrorDto"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "maxbot_internal_dto.AcceptInvitationDto": {
+            "type": "object",
+            "properties": {
+                "invitation_hash": {
+                    "type": "string"
+                }
+            }
+        },
+        "maxbot_internal_dto.CreateLogDto": {
+            "type": "object",
+            "required": [
+                "duel_id",
+                "message"
+            ],
+            "properties": {
+                "duel_id": {
+                    "type": "integer"
+                },
+                "message": {
+                    "description": "required, non-empty",
+                    "type": "string",
+                    "minLength": 1
+                },
+                "photo": {
+                    "description": "base64, optional",
+                    "type": "string"
+                }
+            }
+        },
+        "maxbot_internal_dto.CreateNewDuelDto": {
+            "type": "object",
+            "properties": {
+                "days": {
+                    "type": "integer"
+                },
+                "habit_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "maxbot_internal_dto.CreateNewHabitDto": {
+            "type": "object",
+            "properties": {
+                "habit_category": {
+                    "type": "string"
+                },
+                "habit_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "maxbot_internal_dto.ErrorDto": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "type": "string"
+                },
+                "error": {
+                    "type": "string"
+                }
+            }
+        },
+        "maxbot_internal_dto.HabitDto": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "maxbot_internal_dto.InvitationLinkDto": {
+            "type": "object",
+            "properties": {
+                "invitation_link": {
+                    "type": "string"
+                }
+            }
+        },
+        "maxbot_internal_dto.LogDto": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "duel_id": {
+                    "type": "integer"
+                },
+                "log_id": {
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "owner_id": {
+                    "type": "integer"
+                },
+                "photo": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "maxbot_internal_dto.MessageDto": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "maxbot_internal_dto.UserDto": {
+            "type": "object",
+            "properties": {
+                "duels_info": {
+                    "description": "Дуэльки в которых участвует юзер",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/maxbot_internal_models.DuelDb"
+                    }
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "last_time_contributed": {
+                    "type": "string"
+                },
+                "photo_url": {
+                    "type": "string"
+                },
+                "streak": {
+                    "description": "Стрик из привычек",
+                    "type": "integer"
+                },
+                "winrate": {
+                    "description": "Винрейт сразу в процентах",
+                    "type": "number"
+                },
+                "wins": {
+                    "description": "Победы",
+                    "type": "integer"
+                }
+            }
+        },
+        "maxbot_internal_models.DuelDb": {
+            "type": "object",
+            "properties": {
+                "duration_in_days": {
+                    "type": "integer"
+                },
+                "end_date": {
+                    "$ref": "#/definitions/sql.NullString"
+                },
+                "habit_category": {
+                    "type": "string"
+                },
+                "habit_id": {
+                    "type": "integer"
+                },
+                "habit_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "start_date": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "user1_completed": {
+                    "type": "integer"
+                },
+                "user1_first_name": {
+                    "type": "string"
+                },
+                "user1_id": {
+                    "type": "integer"
+                },
+                "user1_photo_url": {
+                    "$ref": "#/definitions/sql.NullString"
+                },
+                "user2_completed": {
+                    "type": "integer"
+                },
+                "user2_first_name": {
+                    "$ref": "#/definitions/sql.NullString"
+                },
+                "user2_id": {
+                    "$ref": "#/definitions/sql.NullInt64"
+                },
+                "user2_photo_url": {
+                    "$ref": "#/definitions/sql.NullString"
+                },
+                "winner_id": {
+                    "$ref": "#/definitions/sql.NullInt64"
+                }
+            }
+        },
+        "sql.NullInt64": {
+            "type": "object",
+            "properties": {
+                "int64": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "valid": {
+                    "description": "Valid is true if Int64 is not NULL",
+                    "type": "boolean"
+                }
+            }
+        },
+        "sql.NullString": {
+            "type": "object",
+            "properties": {
+                "string": {
+                    "type": "string"
+                },
+                "valid": {
+                    "description": "Valid is true if String is not NULL",
+                    "type": "boolean"
+                }
+            }
+        }
+    }
+}

@@ -14,6 +14,11 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// @title MaxBot API docs
+// @version 0.9
+// @description Documentation for "Habit Duels" project
+// @host localhost:8080
+
 func main() {
 	repositoryObj := repository.New()
 	serviceObj := &services.Service{Repository: repositoryObj}
