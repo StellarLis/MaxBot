@@ -1,4 +1,4 @@
-import type { ElementType } from "react";
+import { type ElementType } from "react";
 import classes from "./StatCard.module.css";
 
 interface StatCardProps {

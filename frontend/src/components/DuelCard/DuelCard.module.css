@@ -37,6 +37,17 @@
     border: 1px solid #9810fa80;
 }
 
+.victoryStatus {
+    font-size: 12px;
+    text-align: center;
+    color: #008236;
+    background-color: #dcfce7;
+    padding: 4px;
+    border-radius: 12px;
+    margin-top: 8px;
+    border: 1px solid #00a63e;
+}
+
 .tieStatus {
     font-size: 12px;
     text-align: center;
@@ -165,4 +176,36 @@
     background-color: #030213;
     width: 100%;
     height: 100%;
+}
+
+.footer {
+    margin-top: 14px;
+    padding-top: 16px;
+    display: flex;
+    justify-content: end;
+    align-items: center;
+    gap: 14px;
+    border-top: 1px solid #bdbdbd;
+}
+
+.viewLogs {
+    text-decoration: none;
+    text-align: center;
+    font-size: 12px;
+    padding: 5px;
+    background-color: #f54a0026;
+    color: #dc4300;
+    border: 1px solid #f54a0080;
+    border-radius: 14px;
+}
+
+.makeLog {
+    text-decoration: none;
+    text-align: center;
+    font-size: 12px;
+    padding: 5px;
+    background-color: #9810fa26;
+    color: #9810fa;
+    border: 1px solid #9810fa80;
+    border-radius: 14px;
 }

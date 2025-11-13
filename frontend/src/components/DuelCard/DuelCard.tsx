@@ -2,6 +2,7 @@ import type { Duel } from "../../lib/types/types.ts";
 import classes from "./DuelCard.module.css"
 import { Crown, Flame } from "lucide-react";
 import { Progress } from "radix-ui";
+import { Link } from "react-router";
 
 interface DuelCardProps {
     duel: Duel;
@@ -21,9 +22,9 @@ function DuelCard( { duel }: DuelCardProps) {
         <div
             className={ classes.cardContainer }
             style={duel.status === "won"
-                ? {backgroundColor: "#e9fdef"}
+                ? {backgroundColor: "#f3fff8"}
                 : duel.status === "tied"
-                    ? {backgroundColor: "#eff6ff"}
+                    ? {backgroundColor: "#e7f3fd"}
                     : {backgroundColor: "#fff"}
             }
         >
@@ -35,7 +36,7 @@ function DuelCard( { duel }: DuelCardProps) {
                 {duel.userProgress > duel.opponentProgress && duel.status === 'active' && <p className={classes.leadingStatus}>Впереди</p>}
                 {duel.userProgress === duel.opponentProgress && duel.status === 'active' && <p className={classes.tieStatus}>Ничья</p>}
                 {duel.userProgress < duel.opponentProgress && duel.status === 'active' && <p className={classes.behindStatus}>Позади</p>}
-                {duel.userProgress > duel.opponentProgress && duel.status !== 'active' && <p className={classes.leadingStatus}>Победа</p>}
+                {duel.userProgress > duel.opponentProgress && duel.status !== 'active' && <p className={classes.victoryStatus}>Победа</p>}
                 {duel.userProgress === duel.opponentProgress && duel.status !== 'active' && <p className={classes.tieStatus}>Ничья</p>}
                 {duel.userProgress < duel.opponentProgress && duel.status !== 'active' && <p className={classes.behindStatus}>Поражение</p>}
             </header>
@@ -53,6 +54,10 @@ function DuelCard( { duel }: DuelCardProps) {
                 targetDays={ duel.targetDays }
                 streak={ duel.opponentStreak }
             />
+            <footer className={ classes.footer }>
+                <Link className={ classes.viewLogs } to={ `/duelLogs/${duel.id}` }>Посмотреть прогресс</Link>
+                { duel.status === 'active' && <Link className={ classes.makeLog } to={ `/logDuel/${duel.id}` }>Зафиксировать прогресс</Link> }
+            </footer>
         </div>
     );
 }
