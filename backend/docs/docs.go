@@ -331,6 +331,31 @@ const docTemplate = `{
                 }
             }
         },
+        "/test/makeTestData": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Make test data. Creates users witd max id's {MAXID_1, MAXID_2, MAXID_3, MAXID_4}",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/maxbot_internal_dto.MessageDto"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/maxbot_internal_dto.ErrorDto"
+                        }
+                    }
+                }
+            }
+        },
         "/user/getUserInfo": {
             "get": {
                 "consumes": [

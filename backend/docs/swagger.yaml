@@ -370,6 +370,23 @@ paths:
           schema:
             $ref: '#/definitions/maxbot_internal_dto.ErrorDto'
       summary: Get user habits
+  /test/makeTestData:
+    post:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/maxbot_internal_dto.MessageDto'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/maxbot_internal_dto.ErrorDto'
+      summary: Make test data. Creates users witd max id's {MAXID_1, MAXID_2, MAXID_3,
+        MAXID_4}
   /user/getUserInfo:
     get:
       consumes:

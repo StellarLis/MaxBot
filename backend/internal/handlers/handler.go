@@ -336,17 +336,21 @@ func (h *HttpHandler) AcceptInvitation(c *gin.Context) {
 	c.JSON(http.StatusOK, dto.MessageDto{Message: "successfully accepted invitation!"})
 }
 
-// --For dev testing-- //
+// MakeTestData godoc
+// @Summary      Make test data. Creates users witd max id's {MAXID_1, MAXID_2, MAXID_3, MAXID_4}
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}  dto.MessageDto
+// @Failure      400  {object} dto.ErrorDto
+// @Router       /test/makeTestData [post]
 func (h *HttpHandler) MakeTestData(c *gin.Context) {
 	if err := h.Service.CreateTestData(); err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"error":   "error while creating test data",
-			"details": err.Error(),
+		c.AbortWithStatusJSON(http.StatusInternalServerError, dto.ErrorDto{
+			Error: "error while creating test data",
+			Details: err.Error(),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "successfully created test data",
-	})
+	c.JSON(http.StatusOK, dto.MessageDto{Message: "successfully created test data!"})
 }
