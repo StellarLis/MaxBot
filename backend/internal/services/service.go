@@ -20,6 +20,7 @@ type ServiceInterface interface {
 	GetUserHabits(user_id int64) ([]dto.HabitDto, error)
 	CreateDuelAndGetHash(user_id int64, habit_id int, days int) (string, error)
 	AcceptInvitation(user_id int64, invitationHash string) error
+	CreateTestData() error
 }
 
 type Service struct {
@@ -173,4 +174,9 @@ func (s *Service) CreateDuelAndGetHash(user_id int64, habit_id int, days int) (s
 
 func (s *Service) AcceptInvitation(user_id int64, invitationHash string) error {
 	return s.Repository.ActivateDuelFromInvitationHash(user_id, invitationHash)
+}
+
+// --For dev testing-- //
+func (s *Service) CreateTestData() error {
+	return s.Repository.CreateTestData()
 }
