@@ -109,8 +109,8 @@ type Repository struct {
 
 func New() *Repository {
 	connectionString := fmt.Sprintf(
-		"user=%v password=%v dbname=%v port=%v host=host.docker.internal sslmode=disable",
-		os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_NAME"), os.Getenv("DB_PORT"),
+		"user=%v password=%v dbname=%v port=%v host=%v sslmode=disable",
+		os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_NAME"), os.Getenv("DB_PORT"), os.Getenv("DB_HOST"),
 	)
 	db, err := sqlx.Connect("postgres", connectionString)
 	if err != nil {

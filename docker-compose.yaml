@@ -3,6 +3,7 @@ services:
     build: ./backend
     container_name: backend-service
     environment:
+      - DB_HOST=0.0.0.0
       - DB_USER=postgres
       - DB_PASSWORD=sigma_password_noone12351
       - DB_PORT=5432
