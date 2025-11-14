@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
 	"maxbot/internal/handlers"
 	"maxbot/internal/repository"
@@ -28,7 +29,7 @@ func main() {
 
 	// Run Http Server
 	server := &http.Server{
-		Addr:         ":8080",
+		Addr:         fmt.Sprintf(":%s", os.Getenv("APP_PORT")),
 		Handler:      handler.New(),
 		ReadTimeout:  4 * time.Second,
 		WriteTimeout: 4 * time.Second,
