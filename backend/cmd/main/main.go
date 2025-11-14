@@ -29,7 +29,7 @@ func main() {
 
 	// Run Http Server
 	server := &http.Server{
-		Addr:         fmt.Sprintf(":%s", os.Getenv("APP_PORT")),
+		Addr:         fmt.Sprintf(":%s", os.Getenv("PORT")),
 		Handler:      handler.New(),
 		ReadTimeout:  4 * time.Second,
 		WriteTimeout: 4 * time.Second,
