@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import DuelsPageList from "../components/DuelsPageList/DuelsPageList.tsx";
 import useFetch from "../hooks/useFetch.ts";
 import type { Duel, UserInfo } from "../lib/types/types.ts";
-import { LoaderCircle } from "lucide-react";
 
 function DuelsPage() {
     const API_BASE = "http://localhost:8080";
@@ -45,7 +44,7 @@ function DuelsPage() {
                 setToggle={ setToggleDuels }
             />
 
-            { isPending && <div className="loaderCircle"><LoaderCircle className="loaderIcon" /></div> }
+            { isPending && <div className="loaderCircle"></div> }
             { error && <p style={{textAlign: "center"}}>{ error }</p>}
             <DuelsPageList
                 duelList={ userInfo ? userInfo.duels_info : [] }

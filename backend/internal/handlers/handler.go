@@ -10,10 +10,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files" // swagger embed files
 	ginSwagger "github.com/swaggo/gin-swagger"
-	"github.com/gin-contrib/cors"
 
 	_ "maxbot/docs"
 )
@@ -76,9 +76,9 @@ func (h *HttpHandler) GetUserInfo(c *gin.Context) {
 	user := c.MustGet("currentUser").(*models.UserDb)
 	duels, err := h.Service.Repository.FindDuelsByUserId(user.ID)
 	if err != nil {
-		
+
 		c.JSON(http.StatusBadRequest, dto.ErrorDto{
-			Error: "Invalid request",
+			Error:   "Invalid request",
 			Details: err.Error(),
 		})
 		return
@@ -119,9 +119,9 @@ func (h *HttpHandler) GetUserInfo(c *gin.Context) {
 func (h *HttpHandler) GetDuelLogs(c *gin.Context) {
 	userIDStr := c.Query("id")
 	if userIDStr == "" {
-		
+
 		c.JSON(http.StatusBadRequest, dto.ErrorDto{
-			Error: "error while getting query id",
+			Error:   "error while getting query id",
 			Details: "query parameter 'id' is required",
 		})
 		return
@@ -130,7 +130,7 @@ func (h *HttpHandler) GetDuelLogs(c *gin.Context) {
 	userID, err := strconv.ParseInt(userIDStr, 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, dto.ErrorDto{
-			Error: "error while parsing id",
+			Error:   "error while parsing id",
 			Details: "invalid 'id': must be an integer",
 		})
 		return
@@ -139,7 +139,7 @@ func (h *HttpHandler) GetDuelLogs(c *gin.Context) {
 	logs, err := h.Service.GetDuelLogs(userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.ErrorDto{
-			Error: "error while getting logs",
+			Error:   "error while getting logs",
 			Details: "failed to retrieve logs",
 		})
 		return
@@ -165,7 +165,7 @@ func (h *HttpHandler) ContributeToDuel(c *gin.Context) {
 	var req dto.CreateLogDto
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, dto.ErrorDto{
-			Error: "Invalid request",
+			Error:   "Invalid request",
 			Details: err.Error(),
 		})
 		return
@@ -174,7 +174,7 @@ func (h *HttpHandler) ContributeToDuel(c *gin.Context) {
 	msg := strings.TrimSpace(req.Message)
 	if msg == "" {
 		c.JSON(http.StatusBadRequest, dto.ErrorDto{
-			Error: "Error while processing message",
+			Error:   "Error while processing message",
 			Details: "message cannot be empty or whitespace only",
 		})
 		return
@@ -186,14 +186,14 @@ func (h *HttpHandler) ContributeToDuel(c *gin.Context) {
 		photoBytes, err = base64.StdEncoding.DecodeString(req.Photo)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, dto.ErrorDto{
-				Error: "Error while processing photo",
+				Error:   "Error while processing photo",
 				Details: "invalid base64 in 'photo'",
 			})
 			return
 		}
 		if len(photoBytes) > 5*1024*1024 {
 			c.JSON(http.StatusBadRequest, dto.ErrorDto{
-				Error: "Error while processing photo",
+				Error:   "Error while processing photo",
 				Details: "photo too large (max 5GB)",
 			})
 			return
@@ -203,9 +203,9 @@ func (h *HttpHandler) ContributeToDuel(c *gin.Context) {
 	err := h.Service.CreateDuelLog(user, user.ID, req.DuelID, msg, photoBytes)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.ErrorDto{
-				Error: "Failed to save log",
-				Details: err.Error(),
-			})
+			Error:   "Failed to save log",
+			Details: err.Error(),
+		})
 		return
 	}
 
@@ -228,7 +228,7 @@ func (h *HttpHandler) CreateNewDuel(c *gin.Context) {
 	var createNewDuelDto dto.CreateNewDuelDto
 	if err := c.BindJSON(&createNewDuelDto); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, dto.ErrorDto{
-			Error: "Failed to parse data",
+			Error:   "Failed to parse data",
 			Details: err.Error(),
 		})
 		return
@@ -238,7 +238,7 @@ func (h *HttpHandler) CreateNewDuel(c *gin.Context) {
 	)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, dto.ErrorDto{
-			Error: "error while creating duel",
+			Error:   "error while creating duel",
 			Details: err.Error(),
 		})
 		return
@@ -264,7 +264,7 @@ func (h *HttpHandler) CreateNewHabit(c *gin.Context) {
 	var createNewHabitDto dto.CreateNewHabitDto
 	if err := c.BindJSON(&createNewHabitDto); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, dto.ErrorDto{
-			Error: "failed to parse data",
+			Error:   "failed to parse data",
 			Details: err.Error(),
 		})
 		return
@@ -276,7 +276,7 @@ func (h *HttpHandler) CreateNewHabit(c *gin.Context) {
 	)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, dto.ErrorDto{
-			Error: "error while creating new habit",
+			Error:   "error while creating new habit",
 			Details: err.Error(),
 		})
 		return
@@ -299,7 +299,7 @@ func (h *HttpHandler) GetUserHabits(c *gin.Context) {
 	habits, err := h.Service.GetUserHabits(userId)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, dto.ErrorDto{
-			Error: "error while getting user habits",
+			Error:   "error while getting user habits",
 			Details: err.Error(),
 		})
 		return
@@ -323,14 +323,14 @@ func (h *HttpHandler) AcceptInvitation(c *gin.Context) {
 	var acceptInvitationDto dto.AcceptInvitationDto
 	if err := c.BindJSON(&acceptInvitationDto); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, dto.ErrorDto{
-			Error: "failed to parse data",
+			Error:   "failed to parse data",
 			Details: err.Error(),
 		})
 		return
 	}
 	if err := h.Service.AcceptInvitation(userId, acceptInvitationDto.InvitationHash); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, dto.ErrorDto{
-			Error: "error while accepting invitation",
+			Error:   "error while accepting invitation",
 			Details: err.Error(),
 		})
 		return
@@ -348,7 +348,7 @@ func (h *HttpHandler) AcceptInvitation(c *gin.Context) {
 func (h *HttpHandler) MakeTestData(c *gin.Context) {
 	if err := h.Service.CreateTestData(); err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, dto.ErrorDto{
-			Error: "error while creating test data",
+			Error:   "error while creating test data",
 			Details: err.Error(),
 		})
 		return
