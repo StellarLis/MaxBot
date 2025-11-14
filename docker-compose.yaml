@@ -1,22 +1,10 @@
 services:
-  frontend:
-    build: ./frontend
-    container_name: frontend
-    ports:
-      - "5173:5173"
-    depends_on:
-      - backend-service
-    networks:
-      - app_net
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
   backend-service:
     build: ./backend
     container_name: backend-service
     environment:
       - DB_USER=postgres
-      - DB_PASSWORD=root
+      - DB_PASSWORD=sigma_password_noone12351
       - DB_PORT=5432
       - DB_NAME=app_db
     ports:
@@ -32,7 +20,7 @@ services:
     container_name: postgres
     environment:
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=root
+      - POSTGRES_PASSWORD=sigma_password_noone12351
       - POSTGRES_DB=app_db
     ports:
       - "5432:5432"
