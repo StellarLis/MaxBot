@@ -1,16 +1,54 @@
+type User2_id = {
+    Int64: number,
+    Valid: boolean,
+}
+
+type User2_first_name = {
+    String: string,
+    Valid: boolean
+}
+
+type UserPhotoUrl = {
+    String: string,
+    Valid: boolean,
+}
+
+type EndDate = {
+    String: string,
+    Valid: boolean,
+}
+
+type WinnerId = {
+    Int64: number,
+    Valid: boolean
+}
+
 export type Duel = {
-    id: string,
-    habitName: string,
-    opponentName: string,
-    opponentAvatar: string,
-    userProgress: number,
-    opponentProgress: number,
-    targetDays: number,
-    currentDay: number,
-    startDate: string,
-    endDate: string,
-    status: "active" | "won" | "lost" | "tied"
-    userStreak: number,
-    opponentStreak: number,
-    category: string
+    id: number,
+    duration_in_days: number,
+    habit_id: number,
+    habit_name: string,
+    habit_category: string,
+    user1_id: number,
+    user2_id: User2_id,
+    user1_completed: number,
+    user2_completed: number,
+    user1_first_name: string,
+    user2_first_name: User2_first_name,
+    user1_photo_url: UserPhotoUrl,
+    user2_photo_url: UserPhotoUrl,
+    start_date: string,
+    end_date: EndDate,
+    winner_id: WinnerId,
+    status: 'active' | 'invited' | 'ended',
+}
+
+export type UserInfo = {
+    streak: number,
+    wins: number,
+    winrate: number,
+    first_name: string,
+    photo_url: string,
+    last_time_contributed: string,
+    duels_info: Duel[]
 }

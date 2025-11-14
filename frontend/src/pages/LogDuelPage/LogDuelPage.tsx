@@ -1,56 +1,63 @@
-import { Link, useParams } from "react-router";
+import { useParams } from "react-router";
 import useFetch from "../../hooks/useFetch.ts";
-import type { Duel } from "../../lib/types/types.ts";
-import { Camera, ChevronLeft, CircleCheck, CircleX, LoaderCircle, Type } from "lucide-react";
+import type { Duel, UserInfo } from "../../lib/types/types.ts";
+import { Camera, CircleCheck, CircleX, LoaderCircle, Type } from "lucide-react";
 import classes from "./LogDuelPage.module.css";
 import { Dialog } from "radix-ui";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import LogDuelPageHeader from "../../components/LogDuelPageHeader/LogDuelPageHeader.tsx";
 
 function LogDuelPage() {
+    const API_BASE = "http://localhost:8080"
+
     const [noteValue, setNoteValue] = useState<string>("");
     const [isNoteSaved, setIsNoteSaved] = useState<boolean>(false);
     const [isImageSaved, setIsImageSaved] = useState<boolean>(false);
     const [image, setImage] = useState<string | null>(null);
+    const [duel, setDuel] = useState<Duel | null>(null);
+    const [file, setFile] = useState<File | null>(null);
 
     const { duelID } = useParams();
-    const { data: duel, isPending, error } = useFetch<Duel>(`http://localhost:4000/duels/${duelID}`);
+    const { fetching: fetchUserInfo, isPending, error } = useFetch(async () => {
+        const response = await fetch(`${API_BASE}/user/getUserInfo?max_id=MAXID_1&first_name=User%201&photo_url=https://static.wikia.nocookie.net/9ce54273-1acd-4741-a95e-2c901171c601`);
+        const data: UserInfo = await response.json();
+        setDuel(data.duels_info.filter(duel => duel.id === Number(duelID))[0]);
+    });
 
-    const getImage = (fullPath: string | null): string => {
-        if (fullPath === null) {
-            return "";
+    const handleFileSelect = (e) => {
+        const file: File = e.target.files[0];
+
+        if (!file) {
+            return;
         }
 
-        let sliceIndex = 0;
-        for (let i = fullPath.length - 1; i >= 0; i--) {
-            if (fullPath[i] === "\\") {
-                sliceIndex = i;
-                break;
-            }
+        if (!file.type.startsWith('image/')) {
+            alert("Пожайлуйста, выберите изображение");
+            return;
         }
 
-        return fullPath.slice(sliceIndex, fullPath.length);
+        setImage(file.name);
+        setFile(file);
     }
 
     const handleSubmit = () => {
+        if (noteValue === null) {
+            return;
+        }
 
     }
 
+    useEffect(() => {
+        fetchUserInfo();
+    }, []);
+
     return (
         <>
-            { isPending && <LoaderCircle className={ classes.loader } /> }
-            { error && <h1>Error: { error.message }</h1> }
+            { isPending && <div className="loaderCircle"><LoaderCircle className="loaderIcon" /></div> }
+            { error && <h1>Error: { error }</h1> }
             { duel !== null &&
                 <>
-                    <header className={ classes.header } >
-                        <Link
-                            className={ classes.backLink }
-                            to={ '/' }
-                        >
-                            <ChevronLeft />
-                        </Link>
-                        <h1 className={ classes.headerText }>Зафиксировать прогресс</h1>
-                        <p className={ classes.habitName }>{ duel.habitName }</p>
-                    </header>
+                    <LogDuelPageHeader habitName={ duel.habit_name } />
                     <main className={ classes.mainContent }>
                         <h2 className={ classes.mainContent__header }>
                             Как бы вы хотели зафиксировать прогресс?
@@ -131,10 +138,10 @@ function LogDuelPage() {
                                     <label className={ classes.fileInput }>
                                         <input
                                             type="file"
-                                            onChange={(e) => setImage(e.target.value)}
+                                            onChange={ handleFileSelect }
                                         />
                                         <span className={ classes.fileInputButton }>Выберите файл</span>
-                                        <span className={ classes.fileInputText}>{ getImage(image) }</span>
+                                        <span className={ classes.fileInputText}>{ image }</span>
                                     </label>
                                     <div className={classes.bottomContainer }>
                                         <Dialog.Close asChild>

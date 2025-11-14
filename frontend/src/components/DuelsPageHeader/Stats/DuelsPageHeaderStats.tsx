@@ -35,7 +35,7 @@ function DuelsPageHeaderStats( { winsCount, activeDuels, winRate}: DuelsPageHead
             />
             <StatCard
                 Icon={ Flame }
-                title={ "Активные" }
+                title={ "Серия" }
                 value={ activeDuels }
                 colors={ activeDuelsColors }
             />

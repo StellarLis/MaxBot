@@ -1,4 +1,3 @@
-import classes from "./DuelsPageList.module.css";
 import DuelCard from "../DuelCard/DuelCard.tsx";
 import type { Duel } from "../../lib/types/types.ts";
 
@@ -11,7 +10,7 @@ interface DuelPageListProps {
 function DuelsPageList( { duelList, duelStatus }: DuelPageListProps) {
 
     return (
-        <main className={ classes.listContainer }>
+        <main>
             {duelStatus === 'active' && duelList.filter(duel => duel.status === 'active').map(duel => (
                 <DuelCard duel={ duel } key={ duel.id } />
             ))}

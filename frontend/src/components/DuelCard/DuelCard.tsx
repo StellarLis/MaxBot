@@ -1,6 +1,6 @@
 import type { Duel } from "../../lib/types/types.ts";
 import classes from "./DuelCard.module.css"
-import { Crown, Flame } from "lucide-react";
+import { Crown } from "lucide-react";
 import { Progress } from "radix-ui";
 import { Link } from "react-router";
 
@@ -13,7 +13,6 @@ interface ParticipantProps {
     isLead: boolean;
     score: number;
     targetDays: number;
-    streak: number;
 }
 
 function DuelCard( { duel }: DuelCardProps) {
@@ -21,38 +20,30 @@ function DuelCard( { duel }: DuelCardProps) {
     return (
         <div
             className={ classes.cardContainer }
-            style={duel.status === "won"
-                ? {backgroundColor: "#f3fff8"}
-                : duel.status === "tied"
-                    ? {backgroundColor: "#e7f3fd"}
-                    : {backgroundColor: "#fff"}
-            }
         >
             <header>
                 <h2 className={ classes.header }>
-                    <span className={ classes.title }>{ duel.habitName }</span>
-                    <span className={ classes.category }>{ duel.category }</span>
+                    <span className={ classes.title }>{ duel.habit_name }</span>
+                    <span className={ classes.category }>{ duel.habit_category }</span>
                 </h2>
-                {duel.userProgress > duel.opponentProgress && duel.status === 'active' && <p className={classes.leadingStatus}>Впереди</p>}
-                {duel.userProgress === duel.opponentProgress && duel.status === 'active' && <p className={classes.tieStatus}>Ничья</p>}
-                {duel.userProgress < duel.opponentProgress && duel.status === 'active' && <p className={classes.behindStatus}>Позади</p>}
-                {duel.userProgress > duel.opponentProgress && duel.status !== 'active' && <p className={classes.victoryStatus}>Победа</p>}
-                {duel.userProgress === duel.opponentProgress && duel.status !== 'active' && <p className={classes.tieStatus}>Ничья</p>}
-                {duel.userProgress < duel.opponentProgress && duel.status !== 'active' && <p className={classes.behindStatus}>Поражение</p>}
+                {duel.user1_completed > duel.user2_completed && duel.status === 'active' && <p className={classes.leadingStatus}>Впереди</p>}
+                {duel.user1_completed === duel.user2_completed && duel.status === 'active' && <p className={classes.tieStatus}>Ничья</p>}
+                {duel.user1_completed < duel.user2_completed && duel.status === 'active' && <p className={classes.behindStatus}>Позади</p>}
+                {duel.user1_completed > duel.user2_completed && duel.status !== 'active' && <p className={classes.victoryStatus}>Победа</p>}
+                {duel.user1_completed === duel.user2_completed && duel.status !== 'active' && <p className={classes.tieStatus}>Ничья</p>}
+                {duel.user1_completed < duel.user2_completed && duel.status !== 'active' && <p className={classes.behindStatus}>Поражение</p>}
             </header>
             <Participant
                 name={ "Вы" }
-                isLead={ duel.userProgress > duel.opponentProgress }
-                score={ duel.userProgress }
-                targetDays={ duel.targetDays }
-                streak={ duel.userStreak }
+                isLead={ duel.user1_completed > duel.user2_completed }
+                score={ duel.user1_completed }
+                targetDays={ duel.duration_in_days }
             />
             <Participant
-                name={ duel.opponentName }
-                isLead={ duel.userProgress < duel.opponentProgress }
-                score={ duel.opponentProgress }
-                targetDays={ duel.targetDays }
-                streak={ duel.opponentStreak }
+                name={ duel.user2_first_name.String }
+                isLead={ duel.user1_completed < duel.user2_completed }
+                score={ duel.user2_completed }
+                targetDays={ duel.duration_in_days }
             />
             <footer className={ classes.footer }>
                 <Link className={ classes.viewLogs } to={ `/duelLogs/${duel.id}` }>Посмотреть прогресс</Link>
@@ -62,7 +53,7 @@ function DuelCard( { duel }: DuelCardProps) {
     );
 }
 
-function Participant( { name, isLead, score, targetDays, streak }: ParticipantProps ) {
+function Participant( { name, isLead, score, targetDays }: ParticipantProps ) {
     const isUser: boolean = name === "Вы";
     const progressPercentage: number = score / targetDays * 100;
 
@@ -76,10 +67,6 @@ function Participant( { name, isLead, score, targetDays, streak }: ParticipantPr
                 </div>
                 <div className={ classes.stats }>
                     <p className={ classes.score }>{ score }/{ targetDays }</p>
-                    <span className={ isUser ? classes.userStreakStat : classes.oppStreakStat }>
-                    <Flame className={ isUser ? classes.userStreakIcon : classes.oppStreakIcon } />
-                        { streak }
-                </span>
                 </div>
             </div>
             <Progress.Root

@@ -1,37 +1,21 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-function useFetch<T>(url: string) {
-    const [data, setData] = useState<T | null>(null);
-    const [isPending, setIsPending] = useState<boolean>(false);
-    const [error, setError] = useState<Error | null>(null);
+type Callback = () => Promise<void>;
 
-    useEffect(() => {
-        const abortController = new AbortController();
-        const { signal } = abortController;
-        setIsPending(true);
+export default function useFetch(callback: Callback) {
+    const [isPending, setIsPending] = useState(false);
+    const [error, setError] = useState<string>("");
 
-        fetch(url, { signal: signal })
-            .then(res => {
-                if (!res.ok) {
-                    throw new Error("HTTP error");
-                }
-                return res.json();
-            })
-            .then((data: T) => {
-                setData(data);
-                setIsPending(false);
-            })
-            .catch(err => {
-                if (err.name !== "AbortError") {
-                    setError(err);
-                    setIsPending(false);
-                }
-            });
+    const fetching = async () => {
+        try {
+            setIsPending(true);
+            await callback();
+        } catch (e: any) {
+            setError(e.message);
+        } finally {
+            setIsPending(false);
+        }
+    }
 
-        return () => abortController.abort();
-    }, []);
-
-    return { data, setData, isPending, error };
+    return { fetching, isPending, error };
 }
-
-export default useFetch;
