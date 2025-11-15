@@ -1,6 +1,6 @@
 import { useParams } from "react-router";
 import { useEffect, useState } from "react";
-import LogDuelPageHeader from "../../components/LogDuelPageHeader/LogDuelPageHeader";
+import ViewLogsPageHeader from "./ViewLogsPageHeader";
 import ViewLogsPageControls from "./ViewLogsPageControls";
 import classes from "./ViewLogsPage.module.css";
 import useFetch from "../../hooks/useFetch.ts";
@@ -68,7 +68,7 @@ function ViewLogsPage() {
 
     return (
         <>
-            <LogDuelPageHeader habitName={habitName || "Привычка"} />
+            <ViewLogsPageHeader habitName={habitName || "Привычка"} />
 
             <ViewLogsPageControls
                 toggle={toggle}
