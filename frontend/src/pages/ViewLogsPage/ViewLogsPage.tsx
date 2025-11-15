@@ -43,10 +43,16 @@ function ViewLogsPage() {
             return;
         }
 
-        const data: Log[] = await response.json();
+        const raw: Log[] = await response.json();
 
-        // сортируем по дате (новые сверху)
-        const sorted = data.sort(
+        const normalized = raw.map(l => ({
+            ...l,
+            owner_id: Number(l.owner_id),
+            log_id: Number(l.log_id),
+            duel_id: Number(l.duel_id),
+        }));
+
+        const sorted = normalized.sort(
             (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
 
