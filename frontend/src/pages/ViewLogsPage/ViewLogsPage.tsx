@@ -1,10 +1,9 @@
-import { useParams } from "react-router";
 import { useEffect, useState } from "react";
 import LogDuelPageHeader from "../../components/LogDuelPageHeader/LogDuelPageHeader";
 import ViewLogsPageControls from "./ViewLogsPageControls";
 import classes from "./ViewLogsPage.module.css";
 import useFetch from "../../hooks/useFetch";
-import type { Log } from "../../lib/types/types";
+import type { Log, UserInfo } from "../../lib/types/types";
 import { LoaderCircle } from "lucide-react";
 
 declare global {
@@ -15,15 +14,14 @@ declare global {
 
 function ViewLogsPage() {
     const API_BASE = "https://maxbot-withoutdocker.onrender.com";
-    const { duelID } = useParams();
 
-    const [maxId, setMaxId] = useState<string | null>(null);
+    const [maxId, setMaxId] = useState<string | null>(null);         // MAX user.id
+    const [realId, setRealId] = useState<number | null>(null);       // внутренний id
     const [habitName, setHabitName] = useState("Привычка");
     const [toggle, setToggle] = useState<"user" | "opponent">("user");
     const [logs, setLogs] = useState<Log[]>([]);
 
-    const numericId = maxId ? Number(maxId) : null;
-
+    // 1. Получаем MAX данные
     useEffect(() => {
         if (!window.WebApp) return;
 
@@ -34,41 +32,49 @@ function ViewLogsPage() {
         if (d?.start_param_habit) setHabitName(d.start_param_habit);
     }, []);
 
-    const { fetching: fetchLogs, isPending: isLogsPending } = useFetch(async () => {
-        if (!numericId || !duelID) return;
+    // 2. Получаем ВНУТРЕННИЙ id через user/getUserInfo
+    const { fetching: fetchUser } = useFetch(async () => {
+        if (!maxId) return;
 
-        const url = `${API_BASE}/duel/getDuelLogs?id=${encodeURIComponent(duelID)}`;
-        console.log("REQUEST:", url);
+        const res = await fetch(`${API_BASE}/user/getUserInfo?id=${maxId}`);
+        const data: UserInfo = await res.json();
 
-        const response = await fetch(url);
+        console.log("USER_INFO:", data);
 
-        // Если сервер вернул неверный формат — fallback на []
-        let data: any = [];
-        try {
-            data = await response.json();
-            console.log("LOGS RESPONSE:", data);
-        } catch (e) {
-            console.error("JSON parse error:", e);
-        }
-
-        if (!Array.isArray(data)) {
-            console.warn("Backend did not return array. Falling back to empty list.");
-            setLogs([]);
-            return;
-        }
-
-        setLogs(data);
+        setRealId(data.id); 
     });
 
     useEffect(() => {
-        if (numericId) fetchLogs();
-    }, [numericId]);
+        if (maxId) fetchUser();
+    }, [maxId]);
 
-    const isMyLog = (log: Log) =>
-        numericId !== null && String(log.owner_id) === String(numericId);
+    // 3. Запрашиваем логи по внутреннему id
+    const { fetching: fetchLogs, isPending: isLogsPending } = useFetch(async () => {
+        if (!realId) return;
 
-    const isOppLog = (log: Log) =>
-        numericId !== null && String(log.owner_id) !== String(numericId);
+        const url = `${API_BASE}/duel/getDuelLogs?id=${realId}`;
+        console.log("REQUEST:", url);
+
+        const response = await fetch(url);
+        let data = [];
+
+        try {
+            data = await response.json();
+            console.log("LOGS_RESPONSE:", data);
+        } catch (err) {
+            console.error("JSON parse error:", err);
+        }
+
+        if (Array.isArray(data)) setLogs(data);
+        else setLogs([]);
+    });
+
+    useEffect(() => {
+        if (realId) fetchLogs();
+    }, [realId]);
+
+    const isMyLog = (log: Log) => realId !== null && log.owner_id === realId;
+    const isOppLog = (log: Log) => realId !== null && log.owner_id !== realId;
 
     return (
         <>
@@ -81,30 +87,28 @@ function ViewLogsPage() {
                 opponentCount={logs.filter(isOppLog).length}
             />
 
-            {isLogsPending && (
+            {isLogsPending &&
                 <div className="loaderCircle">
                     <LoaderCircle className="loaderIcon" />
                 </div>
-            )}
+            }
 
             <div className={classes.container}>
-                {(toggle === "user" ? logs.filter(isMyLog) : logs.filter(isOppLog)).map(
-                    (log) => (
-                        <div key={log.log_id} className={classes.logCard}>
-                            {log.photo && log.photo !== "" && (
-                                <img
-                                    src={`data:image/jpeg;base64,${log.photo}`}
-                                    className={classes.photo}
-                                    alt=""
-                                />
-                            )}
-                            <div className={classes.logContent}>
-                                <p className={classes.date}>{log.created_at || ""}</p>
-                                <p className={classes.text}>{log.message || ""}</p>
-                            </div>
+                {(toggle === "user" ? logs.filter(isMyLog) : logs.filter(isOppLog)).map((log) => (
+                    <div key={log.log_id} className={classes.logCard}>
+                        {log.photo && (
+                            <img
+                                src={`data:image/jpeg;base64,${log.photo}`}
+                                className={classes.photo}
+                                alt=""
+                            />
+                        )}
+                        <div className={classes.logContent}>
+                            <p className={classes.date}>{log.created_at}</p>
+                            <p className={classes.text}>{log.message}</p>
                         </div>
-                    )
-                )}
+                    </div>
+                ))}
             </div>
         </>
     );
