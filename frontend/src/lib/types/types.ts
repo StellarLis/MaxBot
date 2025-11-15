@@ -44,6 +44,7 @@ export type Duel = {
 }
 
 export type UserInfo = {
+    id: number,
     streak: number,
     wins: number,
     winrate: number,
