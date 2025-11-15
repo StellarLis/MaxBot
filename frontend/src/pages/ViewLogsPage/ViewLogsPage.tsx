@@ -15,58 +15,67 @@ declare global {
 function ViewLogsPage() {
     const API_BASE = "https://maxbot-withoutdocker.onrender.com";
 
-    const [maxId, setMaxId] = useState<string | null>(null);         // MAX user.id
-    const [realId, setRealId] = useState<number | null>(null);       // внутренний id
+    const [maxId, setMaxId] = useState<string | null>(null);
+    const [realId, setRealId] = useState<number | null>(null);
     const [habitName, setHabitName] = useState("Привычка");
     const [toggle, setToggle] = useState<"user" | "opponent">("user");
     const [logs, setLogs] = useState<Log[]>([]);
+    const [isInitialized, setIsInitialized] = useState(false);
 
-    // 1. Получаем MAX данные
+    // 1. Инициализация MAX Bridge
     useEffect(() => {
         if (!window.WebApp) return;
 
         window.WebApp.ready();
         const d = window.WebApp.initDataUnsafe;
 
+        console.log("MAX INIT:", d);
+
         if (d?.user?.id) setMaxId(String(d.user.id));
         if (d?.start_param_habit) setHabitName(d.start_param_habit);
+
+        setIsInitialized(true); // ← Теперь можно работать
     }, []);
 
-    // 2. Получаем ВНУТРЕННИЙ id через user/getUserInfo
-    const { fetching: fetchUser } = useFetch(async () => {
-        if (!maxId) return;
+    // 2. Загружаем внутренний user.id
+    const { fetching: fetchUserInfo } = useFetch(async () => {
+        if (!isInitialized) return;     // ждём init
+        if (!maxId) return;             // ждём maxId
 
-        const res = await fetch(`${API_BASE}/user/getUserInfo?id=${maxId}`);
+        const url = `${API_BASE}/user/getUserInfo?max_id=${encodeURIComponent(maxId)}`;
+        console.log("USER REQUEST:", url);
+
+        const res = await fetch(url);
         const data: UserInfo = await res.json();
 
-        console.log("USER_INFO:", data);
+        console.log("USER INFO:", data);
 
-        setRealId(data.id); 
+        setRealId(data.id);
     });
 
     useEffect(() => {
-        if (maxId) fetchUser();
-    }, [maxId]);
+        if (isInitialized && maxId) fetchUserInfo();
+    }, [isInitialized, maxId]);
 
-    // 3. Запрашиваем логи по внутреннему id
+    // 3. Загружаем логи по realId
     const { fetching: fetchLogs, isPending: isLogsPending } = useFetch(async () => {
         if (!realId) return;
 
         const url = `${API_BASE}/duel/getDuelLogs?id=${realId}`;
-        console.log("REQUEST:", url);
+        console.log("LOGS REQUEST:", url);
 
         const response = await fetch(url);
         let data = [];
 
         try {
             data = await response.json();
-            console.log("LOGS_RESPONSE:", data);
-        } catch (err) {
-            console.error("JSON parse error:", err);
+        } catch (e) {
+            console.error("LOGS PARSE ERROR:", e);
         }
 
-        if (Array.isArray(data)) setLogs(data);
-        else setLogs([]);
+        console.log("LOGS RESPONSE:", data);
+
+        setLogs(Array.isArray(data) ? data : []);
     });
 
     useEffect(() => {
