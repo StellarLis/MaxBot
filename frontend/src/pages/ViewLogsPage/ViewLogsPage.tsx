@@ -17,19 +17,27 @@ function ViewLogsPage() {
     const API_BASE = "https://maxbot-withoutdocker.onrender.com";
     const { duelID } = useParams();
 
-    const [maxId, setMaxId] = useState<number | null>(null);
+    const [maxId, setMaxId] = useState<string | null>(null); // MAX ID
     const [habitName, setHabitName] = useState<string>("");
     const [toggle, setToggle] = useState<"user" | "opponent">("user");
     const [logs, setLogs] = useState<Log[]>([]);
+
 
     useEffect(() => {
         if (!window.WebApp) return;
         window.WebApp.ready();
 
         const data = window.WebApp.initDataUnsafe;
-        if (data?.user?.id) setMaxId(Number(data.user.id));
-        if (data?.start_param_habit) setHabitName(data.start_param_habit);
+
+        if (data?.start_param_max_id) {
+            setMaxId(String(data.start_param_max_id));
+        }
+
+        if (data?.start_param_habit) {
+            setHabitName(data.start_param_habit);
+        }
     }, []);
+
 
     const { fetching: fetchLogs, isPending: isLogsPending } = useFetch(async () => {
         if (!duelID) return;
@@ -47,7 +55,7 @@ function ViewLogsPage() {
 
         const normalized = raw.map(l => ({
             ...l,
-            owner_id: Number(l.owner_id),
+            max_id: String(l.max_id),
             log_id: Number(l.log_id),
             duel_id: Number(l.duel_id),
         }));
@@ -60,11 +68,11 @@ function ViewLogsPage() {
     });
 
     useEffect(() => {
-        if (duelID) fetchLogs();
+        if (duelID && maxId) fetchLogs();
     }, [duelID, maxId]);
 
-    const userLogs = maxId !== null ? logs.filter(l => l.owner_id === maxId) : [];
-    const opponentLogs = maxId !== null ? logs.filter(l => l.owner_id !== maxId) : [];
+    const userLogs = maxId ? logs.filter(l => l.max_id === maxId) : [];
+    const opponentLogs = maxId ? logs.filter(l => l.max_id !== maxId) : [];
 
     return (
         <>
@@ -85,7 +93,6 @@ function ViewLogsPage() {
 
             {!isLogsPending && logs && (
                 <div className={classes.container}>
-
                     {(toggle === "user" ? userLogs : opponentLogs).map(log => (
                         <div key={log.log_id} className={classes.logCard}>
 
@@ -101,9 +108,9 @@ function ViewLogsPage() {
                                 <p className={classes.date}>{log.created_at}</p>
                                 <p className={classes.text}>{log.message}</p>
                             </div>
+
                         </div>
                     ))}
-
                 </div>
             )}
         </>

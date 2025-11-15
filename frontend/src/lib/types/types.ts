@@ -67,4 +67,5 @@ export type Log = {
     message: string,
     owner_id: number,
     photo: string,
+    max_id: string
 }
