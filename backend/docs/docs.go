@@ -502,6 +502,9 @@ const docTemplate = `{
                 "log_id": {
                     "type": "integer"
                 },
+                "max_id": {
+                    "type": "string"
+                },
                 "message": {
                     "type": "string"
                 },
