@@ -1,9 +1,10 @@
+import { useParams } from "react-router";
 import { useEffect, useState } from "react";
 import LogDuelPageHeader from "../../components/LogDuelPageHeader/LogDuelPageHeader";
 import ViewLogsPageControls from "./ViewLogsPageControls";
 import classes from "./ViewLogsPage.module.css";
-import useFetch from "../../hooks/useFetch";
-import type { Log, UserInfo } from "../../lib/types/types";
+import useFetch from "../../hooks/useFetch.ts";
+import type { Log } from "../../lib/types/types.ts";
 import { LoaderCircle } from "lucide-react";
 
 declare global {
@@ -14,111 +15,97 @@ declare global {
 
 function ViewLogsPage() {
     const API_BASE = "https://maxbot-withoutdocker.onrender.com";
+    const { duelID } = useParams();
 
-    const [maxId, setMaxId] = useState<string | null>(null);
-    const [realId, setRealId] = useState<number | null>(null);
-    const [habitName, setHabitName] = useState("Привычка");
+    const [maxId, setMaxId] = useState<number | null>(null);
+    const [habitName, setHabitName] = useState<string>("");
     const [toggle, setToggle] = useState<"user" | "opponent">("user");
     const [logs, setLogs] = useState<Log[]>([]);
-    const [isInitialized, setIsInitialized] = useState(false);
 
-    // 1. Инициализация MAX Bridge
     useEffect(() => {
         if (!window.WebApp) return;
-
         window.WebApp.ready();
-        const d = window.WebApp.initDataUnsafe;
 
-        console.log("MAX INIT:", d);
-
-        if (d?.user?.id) setMaxId(String(d.user.id));
-        if (d?.start_param_habit) setHabitName(d.start_param_habit);
-
-        setIsInitialized(true); // ← Теперь можно работать
+        const data = window.WebApp.initDataUnsafe;
+        if (data?.user?.id) setMaxId(Number(data.user.id));
+        if (data?.start_param_habit) setHabitName(data.start_param_habit);
     }, []);
 
-    // 2. Загружаем внутренний user.id
-    const { fetching: fetchUserInfo } = useFetch(async () => {
-        if (!isInitialized) return;     // ждём init
-        if (!maxId) return;             // ждём maxId
-
-        const url = `${API_BASE}/user/getUserInfo?max_id=${encodeURIComponent(maxId)}`;
-        console.log("USER REQUEST:", url);
-
-        const res = await fetch(url);
-        const data: UserInfo = await res.json();
-
-        console.log("USER INFO:", data);
-
-        setRealId(data.id);
-    });
-
-    useEffect(() => {
-        if (isInitialized && maxId) fetchUserInfo();
-    }, [isInitialized, maxId]);
-
-    // 3. Загружаем логи по realId
     const { fetching: fetchLogs, isPending: isLogsPending } = useFetch(async () => {
-        if (!realId) return;
+        if (!duelID) return;
 
-        const url = `${API_BASE}/duel/getDuelLogs?id=${realId}`;
-        console.log("LOGS REQUEST:", url);
+        const response = await fetch(
+            `${API_BASE}/duel/getDuelLogs?duel_id=${encodeURIComponent(duelID)}`
+        );
 
-        const response = await fetch(url);
-        let data = [];
-
-        try {
-            data = await response.json();
-        } catch (e) {
-            console.error("LOGS PARSE ERROR:", e);
+        if (!response.ok) {
+            console.error("Failed to load logs");
+            return;
         }
 
-        console.log("LOGS RESPONSE:", data);
+        const raw: Log[] = await response.json();
 
-        setLogs(Array.isArray(data) ? data : []);
+        const normalized = raw.map(l => ({
+            ...l,
+            owner_id: Number(l.owner_id),
+            log_id: Number(l.log_id),
+            duel_id: Number(l.duel_id),
+        }));
+
+        const sorted = normalized.sort(
+            (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+
+        setLogs(sorted);
     });
 
     useEffect(() => {
-        if (realId) fetchLogs();
-    }, [realId]);
+        if (duelID) fetchLogs();
+    }, [duelID, maxId]);
 
-    const isMyLog = (log: Log) => realId !== null && log.owner_id === realId;
-    const isOppLog = (log: Log) => realId !== null && log.owner_id !== realId;
+    const userLogs = maxId !== null ? logs.filter(l => l.owner_id === maxId) : [];
+    const opponentLogs = maxId !== null ? logs.filter(l => l.owner_id !== maxId) : [];
 
     return (
         <>
-            <LogDuelPageHeader habitName={habitName} />
+            <LogDuelPageHeader habitName={habitName || "Привычка"} />
 
             <ViewLogsPageControls
                 toggle={toggle}
                 setToggle={setToggle}
-                userCount={logs.filter(isMyLog).length}
-                opponentCount={logs.filter(isOppLog).length}
+                userCount={userLogs.length}
+                opponentCount={opponentLogs.length}
             />
 
-            {isLogsPending &&
+            {isLogsPending && (
                 <div className="loaderCircle">
                     <LoaderCircle className="loaderIcon" />
                 </div>
-            }
+            )}
 
-            <div className={classes.container}>
-                {(toggle === "user" ? logs.filter(isMyLog) : logs.filter(isOppLog)).map((log) => (
-                    <div key={log.log_id} className={classes.logCard}>
-                        {log.photo && (
-                            <img
-                                src={`data:image/jpeg;base64,${log.photo}`}
-                                className={classes.photo}
-                                alt=""
-                            />
-                        )}
-                        <div className={classes.logContent}>
-                            <p className={classes.date}>{log.created_at}</p>
-                            <p className={classes.text}>{log.message}</p>
+            {!isLogsPending && logs && (
+                <div className={classes.container}>
+
+                    {(toggle === "user" ? userLogs : opponentLogs).map(log => (
+                        <div key={log.log_id} className={classes.logCard}>
+
+                            {log.photo && (
+                                <img
+                                    src={`data:image/jpeg;base64,${log.photo}`}
+                                    className={classes.photo}
+                                    alt="log"
+                                />
+                            )}
+
+                            <div className={classes.logContent}>
+                                <p className={classes.date}>{log.created_at}</p>
+                                <p className={classes.text}>{log.message}</p>
+                            </div>
                         </div>
-                    </div>
-                ))}
-            </div>
+                    ))}
+
+                </div>
+            )}
         </>
     );
 }
