@@ -23,13 +23,13 @@ function ViewLogsPage() {
     const [toggle, setToggle] = useState<"user" | "opponent">("user");
     const [logs, setLogs] = useState<Log[]>([]);
 
-    const numericId = maxId ? Number(maxId) : null;
-
     useEffect(() => {
         if (!window.WebApp) return;
         window.WebApp.ready();
+
         const d = window.WebApp.initDataUnsafe;
-        if (d?.user) setMaxId(d.user.id);
+
+        if (d?.user) setMaxId(String(d.user.id));
         if (d?.start_param_habit) setHabitName(d.start_param_habit);
     }, []);
 
@@ -48,6 +48,12 @@ function ViewLogsPage() {
         if (maxId) fetchLogs();
     }, [maxId]);
 
+    const isMyLog = (log: Log) =>
+        maxId !== null && String(log.owner_id) === String(maxId);
+
+    const isOpponentLog = (log: Log) =>
+        maxId !== null && String(log.owner_id) !== String(maxId);
+
     return (
         <>
             <LogDuelPageHeader habitName={habitName || "Привычка"} />
@@ -55,61 +61,51 @@ function ViewLogsPage() {
             <ViewLogsPageControls
                 toggle={toggle}
                 setToggle={setToggle}
-                userCount={numericId !== null ? logs.filter(l => l.owner_id === numericId).length : 0}
-                opponentCount={numericId !== null ? logs.filter(l => l.owner_id !== numericId).length : 0}
+                userCount={logs.filter(isMyLog).length}
+                opponentCount={logs.filter(isOpponentLog).length}
             />
 
             {isLogsPending && (
-                <div className="loaderCircle"><LoaderCircle className="loaderIcon"/></div>
+                <div className="loaderCircle"><LoaderCircle className="loaderIcon" /></div>
             )}
 
-            {logs &&
-                <div className={classes.container}>
+            <div className={classes.container}>
+                {toggle === "user" &&
+                    logs.filter(isMyLog).map(log => (
+                        <div key={log.log_id} className={classes.logCard}>
+                            {log.photo && (
+                                <img
+                                    src={`data:image/jpeg;base64,${log.photo}`}
+                                    className={classes.photo}
+                                    alt=""
+                                />
+                            )}
+                            <div className={classes.logContent}>
+                                <p className={classes.date}>{log.created_at}</p>
+                                <p className={classes.text}>{log.message}</p>
+                            </div>
+                        </div>
+                    ))
+                }
 
-                    {toggle === "user" &&
-                        numericId !== null &&
-                        logs
-                            .filter(log => log.owner_id === numericId)
-                            .map(log => (
-                                <div key={log.log_id} className={classes.logCard}>
-                                    {log.photo && (
-                                        <img
-                                            src={`data:image/jpeg;base64,${log.photo}`}
-                                            className={classes.photo}
-                                            alt=""
-                                        />
-                                    )}
-                                    <div className={classes.logContent}>
-                                        <p className={classes.date}>{log.created_at}</p>
-                                        <p className={classes.text}>{log.message}</p>
-                                    </div>
-                                </div>
-                            ))
-                    }
-
-                    {toggle === "opponent" &&
-                        numericId !== null &&
-                        logs
-                            .filter(log => log.owner_id !== numericId)
-                            .map(log => (
-                                <div key={log.log_id} className={classes.logCard}>
-                                    {log.photo && (
-                                        <img
-                                            src={`data:image/jpeg;base64,${log.photo}`}
-                                            className={classes.photo}
-                                            alt=""
-                                        />
-                                    )}
-                                    <div className={classes.logContent}>
-                                        <p className={classes.date}>{log.created_at}</p>
-                                        <p className={classes.text}>{log.message}</p>
-                                    </div>
-                                </div>
-                            ))
-                    }
-
-                </div>
-            }
+                {toggle === "opponent" &&
+                    logs.filter(isOpponentLog).map(log => (
+                        <div key={log.log_id} className={classes.logCard}>
+                            {log.photo && (
+                                <img
+                                    src={`data:image/jpeg;base64,${log.photo}`}
+                                    className={classes.photo}
+                                    alt=""
+                                />
+                            )}
+                            <div className={classes.logContent}>
+                                <p className={classes.date}>{log.created_at}</p>
+                                <p className={classes.text}>{log.message}</p>
+                            </div>
+                        </div>
+                    ))
+                }
+            </div>
         </>
     );
 }
