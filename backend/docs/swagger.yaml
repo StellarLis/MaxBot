@@ -279,9 +279,9 @@ paths:
       consumes:
       - application/json
       parameters:
-      - description: User ID
+      - description: duel_id
         in: query
-        name: id
+        name: duel_id
         required: true
         type: string
       produces:

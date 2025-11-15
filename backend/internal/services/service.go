@@ -29,8 +29,8 @@ type Service struct {
 
 var _ ServiceInterface = &Service{}
 
-func (s *Service) GetDuelLogs(user_id int64) ([]dto.LogDto, error) {
-	logs, err := s.Repository.FindDuelLogsByUser(user_id)
+func (s *Service) GetDuelLogs(duel_id int64) ([]dto.LogDto, error) {
+	logs, err := s.Repository.FindDuelLogsByDuelId(duel_id)
 	if err != nil {
 		return nil, err
 	}
