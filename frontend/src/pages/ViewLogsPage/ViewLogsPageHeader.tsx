@@ -1,4 +1,4 @@
-import classes from "./ViewLogsPage.module.css";
+import classes from "./DuelsPageHeader.module.css";
 import { Link } from "react-router";
 import { ChevronLeft } from "lucide-react";
 
