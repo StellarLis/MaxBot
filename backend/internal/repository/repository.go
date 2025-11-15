@@ -226,7 +226,7 @@ func (r *Repository) FindHabitsByUserId(user_id int64) ([]dto.HabitDto, error) {
 }
 
 func (r *Repository) FindDuelLogsByUser(user_id int64) ([]dto.LogDto, error) {
-
+	// DEPRECATED - rewrite if you want to use this func
 	rows, err := r.Db.Query(
 		`SELECT id, owner_id, message, photo, duel_id,
 		TO_CHAR(created_at, 'YYYY-MM-DD') FROM logs WHERE owner_id = $1`, user_id,
@@ -248,8 +248,11 @@ func (r *Repository) FindDuelLogsByUser(user_id int64) ([]dto.LogDto, error) {
 
 func (r *Repository) FindDuelLogsByDuelId(duel_id int64) ([]dto.LogDto, error) {
 	rows, err := r.Db.Query(
-		`SELECT id, owner_id, message, photo, duel_id,
-		TO_CHAR(created_at, 'YYYY-MM-DD') FROM logs WHERE duel_id = $1`, duel_id,
+		`SELECT logs.id, logs.owner_id, users.max_id, logs.message, logs.photo,
+		logs.duel_id, TO_CHAR(logs.created_at, 'YYYY-MM-DD')
+		FROM logs
+		JOIN users ON logs.owner_id = users.id
+		WHERE duel_id = $1`, duel_id,
 	)
 	if err != nil {
 		return nil, err
@@ -258,7 +261,7 @@ func (r *Repository) FindDuelLogsByDuelId(duel_id int64) ([]dto.LogDto, error) {
 	var logs []dto.LogDto = []dto.LogDto{}
 	for rows.Next() {
 		log := dto.LogDto{}
-		rows.Scan(&log.LogID, &log.OwnerID, &log.Message, &log.Photo, &log.DuelID, &log.CreatedAt)
+		rows.Scan(&log.LogID, &log.OwnerID, &log.MaxID, &log.Message, &log.Photo, &log.DuelID, &log.CreatedAt)
 		logs = append(logs, log)
 	}
 
