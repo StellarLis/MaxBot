@@ -366,7 +366,7 @@ func (r *Repository) FindDuelsByUserId(user_id int64) ([]models.DuelDb, error) {
 	if err != nil {
 		return nil, err
 	}
-	if rows.Next() {
+	for rows.Next() {
 		duelDb := models.DuelDb{}
 		err = rows.Scan(&duelDb.Id, &duelDb.Duration, &duelDb.HabitId, &duelDb.HabitName, &duelDb.HabitCategory,
 			&duelDb.User1_id, &duelDb.User2_id,
