@@ -92,6 +92,7 @@ type RepositoryInterface interface {
 	ActivateDuelFromInvitationHash(user_id int64, invitationHash string) error
 	GetDuelById(duel_id int64) (*models.DuelDb, error)
 	FindDuelLogsByUser(user_id int64) ([]dto.LogDto, error)
+	FindDuelLogsByDuelId(duel_id int64) ([]dto.LogDto, error)
 	CreateDuelLog(log *models.LogDB) error
 	FindDuelsByUserId(user_id int64) ([]models.DuelDb, error)
 	IncrementDuelCounter(duel *models.DuelDb, user_id int64) (bool, error)
@@ -231,6 +232,25 @@ func (r *Repository) FindDuelLogsByUser(user_id int64) ([]dto.LogDto, error) {
 		TO_CHAR(created_at, 'YYYY-MM-DD') FROM logs WHERE owner_id = $1`, user_id,
 	)
 
+	if err != nil {
+		return nil, err
+	}
+
+	var logs []dto.LogDto = []dto.LogDto{}
+	for rows.Next() {
+		log := dto.LogDto{}
+		rows.Scan(&log.LogID, &log.OwnerID, &log.Message, &log.Photo, &log.DuelID, &log.CreatedAt)
+		logs = append(logs, log)
+	}
+
+	return logs, nil
+}
+
+func (r *Repository) FindDuelLogsByDuelId(duel_id int64) ([]dto.LogDto, error) {
+	rows, err := r.Db.Query(
+		`SELECT id, owner_id, message, photo, duel_id,
+		TO_CHAR(created_at, 'YYYY-MM-DD') FROM logs WHERE duel_id = $1`, duel_id,
+	)
 	if err != nil {
 		return nil, err
 	}

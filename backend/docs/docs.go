@@ -198,8 +198,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "User ID",
-                        "name": "id",
+                        "description": "duel_id",
+                        "name": "duel_id",
                         "in": "query",
                         "required": true
                     }

@@ -112,22 +112,14 @@ func (h *HttpHandler) GetUserInfo(c *gin.Context) {
 // @Summary      Get logs of a duel
 // @Accept       json
 // @Produce      json
-// @Param        id   query      string  true  "User ID"
+// @Param        duel_id   query      string  true  "duel_id"
 // @Success      200  {object}  []dto.LogDto
 // @Failure      400  {object} dto.ErrorDto
 // @Router       /duel/getDuelLogs [get]
 func (h *HttpHandler) GetDuelLogs(c *gin.Context) {
-	userIDStr := c.Query("id")
-	if userIDStr == "" {
-		
-		c.JSON(http.StatusBadRequest, dto.ErrorDto{
-			Error: "error while getting query id",
-			Details: "query parameter 'id' is required",
-		})
-		return
-	}
+	duel_id_str := c.Query("duel_id")
 
-	userID, err := strconv.ParseInt(userIDStr, 10, 64)
+	duel_id, err := strconv.ParseInt(duel_id_str, 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, dto.ErrorDto{
 			Error: "error while parsing id",
@@ -136,7 +128,7 @@ func (h *HttpHandler) GetDuelLogs(c *gin.Context) {
 		return
 	}
 
-	logs, err := h.Service.GetDuelLogs(userID)
+	logs, err := h.Service.GetDuelLogs(duel_id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.ErrorDto{
 			Error: "error while getting logs",
