@@ -1,4 +1,4 @@
-import { useParams } from "react-router";
+import {useNavigate, useParams} from "react-router";
 import useFetch from "../../hooks/useFetch.ts";
 import type { Duel, UserInfo } from "../../lib/types/types.ts";
 import { Camera, CircleCheck, CircleX, LoaderCircle, Type } from "lucide-react";
@@ -16,6 +16,7 @@ function LogDuelPage() {
     const [image, setImage] = useState<string | null>(null);
     const [duel, setDuel] = useState<Duel | null>(null);
     const [file, setFile] = useState<File | null>(null);
+    const navigate = useNavigate();
 
     const { duelID } = useParams();
     const { fetching: fetchUserInfo, isPending, error } = useFetch(async () => {
@@ -24,7 +25,7 @@ function LogDuelPage() {
         setDuel(data.duels_info.filter(duel => duel.id === Number(duelID))[0]);
     });
 
-    const handleFileSelect = (e) => {
+    const handleFileSelect = (e: any) => {
         const file: File = e.target.files[0];
 
         if (!file) {
@@ -40,9 +41,52 @@ function LogDuelPage() {
         setFile(file);
     }
 
-    const handleSubmit = () => {
+    const fileToPureBase64 = (file: File) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                // @ts-ignore
+                const base64 = reader.result.split(',')[1];
+                resolve(base64);
+            };
+            reader.onerror = error => reject(error);
+            reader.readAsDataURL(file);
+        });
+    };
+
+    const handleSubmit = async () => {
+        let imageBase64;
+
         if (noteValue === null) {
+            alert("Необходимо добавить запись");
             return;
+        }
+
+        if (file) {
+            imageBase64 = await fileToPureBase64(file);
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/duel/contribute?max_id=MAXID_1&first_name=User%201&photo_url=someurl`, {
+                method: "POST",
+                headers: {
+                    'Content-Type': "application/json"
+                },
+                body: JSON.stringify({
+                    duel_id: Number(duelID),
+                    message: noteValue,
+                    photo: imageBase64
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error("Ошибка загрузки");
+            }
+            else {
+                navigate('/');
+            }
+        } catch (err) {
+            console.error("Ошибка загрузки", err);
         }
 
     }
@@ -50,6 +94,7 @@ function LogDuelPage() {
     useEffect(() => {
         fetchUserInfo();
     }, []);
+
 
     return (
         <>

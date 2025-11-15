@@ -52,3 +52,18 @@ export type UserInfo = {
     last_time_contributed: string,
     duels_info: Duel[]
 }
+
+export type Habit = {
+    category: string,
+    id: number,
+    name: string
+}
+
+export type Log = {
+    created_at: string,
+    duel_id: number,
+    log_id: number,
+    message: string,
+    owner_id: number,
+    photo: string,
+}
